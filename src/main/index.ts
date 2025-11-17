@@ -2,6 +2,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, globalShortcut, ipcMain, screen, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
+import { runMigrations } from './db'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -98,7 +99,10 @@ function toggleWindow(): void {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Run database migrations
+  await runMigrations();
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
