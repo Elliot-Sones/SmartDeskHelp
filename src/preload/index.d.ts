@@ -1,1 +1,1 @@
-import '../main/preload.d'
+/// <reference types="../main/preload.d.ts" />
