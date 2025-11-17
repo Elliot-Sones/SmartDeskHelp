@@ -1,15 +1,40 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import { app, BrowserWindow, globalShortcut, ipcMain, screen, shell } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+let mainWindow: BrowserWindow | null = null
+
 function createWindow(): void {
+  // Get the primary display's work area
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+
+  // Window dimensions
+  const windowWidth = 375
+  const windowHeight = screenHeight
+
+  // Position on the right side of the screen with some padding
+  const x = screenWidth - windowWidth
+  const y = Math.floor((screenHeight - windowHeight) / 2)
+
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+  mainWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: x,
+    y: y,
     show: false,
+    frame: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
     autoHideMenuBar: true,
+    backgroundColor: '#100F0F',
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -17,8 +42,23 @@ function createWindow(): void {
     }
   })
 
+  // Make window visible on all workspaces/desktops
+  if (process.platform === 'darwin') {
+    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  }
+
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    // Don't show automatically - wait for the global shortcut
+  })
+
+  mainWindow.on('blur', () => {
+    // Hide window when it loses focus (Raycast-like behavior)
+    // Small delay to prevent hiding when we're intentionally not taking focus
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isFocused()) {
+        mainWindow.hide()
+      }
+    }, 100)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -32,6 +72,25 @@ function createWindow(): void {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+}
+
+function toggleWindow(): void {
+  if (!mainWindow) return
+
+  if (mainWindow.isVisible()) {
+    mainWindow.hide()
+  } else {
+    // Reposition window in case screen configuration changed
+    const primaryDisplay = screen.getPrimaryDisplay()
+    const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+    const [windowWidth, windowHeight] = mainWindow.getSize()
+
+    const x = screenWidth - windowWidth
+    const y = Math.floor((screenHeight - windowHeight) / 2)
+
+    mainWindow.setPosition(x, y)
+    mainWindow.showInactive() // Show without taking focus
   }
 }
 
@@ -54,6 +113,15 @@ app.whenReady().then(() => {
 
   createWindow()
 
+  // Register global shortcut Control+K (or Command+K on macOS)
+  const ret = globalShortcut.register('Control+K', () => {
+    toggleWindow()
+  })
+
+  if (!ret) {
+    console.log('Global shortcut registration failed')
+  }
+
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
@@ -61,13 +129,16 @@ app.whenReady().then(() => {
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+// Keep the app running in the background even when all windows are closed
+// This allows the global shortcut to work at all times
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  // Don't quit the app - keep it running in the background for the global shortcut
+  // Users can quit via Cmd+Q or the menu
+})
+
+// Clean up global shortcuts when app is quitting
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll()
 })
 
 // In this file you can include the rest of your app's specific main process
