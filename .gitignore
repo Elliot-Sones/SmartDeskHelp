@@ -4,3 +4,10 @@ out
 .DS_Store
 .eslintcache
 *.log*
+
+# Environment variables
+.env
+.env.local
+
+# Database files
+.kel/
