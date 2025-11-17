@@ -28,8 +28,7 @@ function createWindow(): void {
     skipTaskbar: true,
     alwaysOnTop: true,
     autoHideMenuBar: true,
-    backgroundColor: '#100F0F',
-    transparent: false,
+    transparent: true,
     roundedCorners: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
@@ -77,7 +76,12 @@ function toggleWindow(): void {
   if (!mainWindow) return
 
   if (mainWindow.isVisible()) {
-    mainWindow.hide()
+    // Notify renderer to start exit animation
+    mainWindow.webContents.send('window-hiding')
+    // Wait for exit animation (50ms) before actually hiding
+    setTimeout(() => {
+      if (mainWindow) mainWindow.hide()
+    }, 50)
   } else {
     // Reposition window in case screen configuration changed
     const primaryDisplay = screen.getPrimaryDisplay()
@@ -89,6 +93,8 @@ function toggleWindow(): void {
 
     mainWindow.setPosition(x, y)
     mainWindow.showInactive() // Show without taking focus
+    // Notify renderer that window is showing
+    mainWindow.webContents.send('window-showing')
   }
 }
 
