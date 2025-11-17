@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom'
 
 export function HomePage() {
   return (
@@ -7,7 +7,7 @@ export function HomePage() {
       <div className="font-[450] antialiased font-serif text-2xl text-f-500">
         What&apos;s on your mind today?
       </div>
-      <br/>
+      <br />
       <Link to="/settings">Go to settings</Link>
     </>
   )
