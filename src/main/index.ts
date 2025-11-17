@@ -8,26 +8,20 @@ let mainWindow: BrowserWindow | null = null
 function createWindow(): void {
   // Get the primary display's work area
   const primaryDisplay = screen.getPrimaryDisplay()
-  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+  const { height: screenHeight } = primaryDisplay.workAreaSize
 
   // Window dimensions
   const windowWidth = 375
   const windowHeight = screenHeight
 
-  // Position on the right side of the screen with some padding
-  const x = screenWidth - windowWidth
-  const y = Math.floor((screenHeight - windowHeight) / 2)
-
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: windowWidth,
     height: windowHeight,
-    x: x,
-    y: y,
     show: false,
     frame: false,
     resizable: false,
-    movable: false,
+    movable: true,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -35,6 +29,7 @@ function createWindow(): void {
     alwaysOnTop: true,
     autoHideMenuBar: true,
     transparent: true,
+    vibrancy: 'under-window',
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -48,6 +43,15 @@ function createWindow(): void {
   }
 
   mainWindow.on('ready-to-show', () => {
+    // Position the window now that it's properly sized
+    const primaryDisplay = screen.getPrimaryDisplay()
+    const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea
+    const [windowWidth] = mainWindow!.getSize()
+    
+    const x = displayX + screenWidth - windowWidth
+    const y = displayY  // Use the display's y offset (accounts for menu bar)
+    
+    mainWindow!.setPosition(x, y)
     // Don't show automatically - wait for the global shortcut
   })
 
@@ -76,11 +80,11 @@ function toggleWindow(): void {
   } else {
     // Reposition window in case screen configuration changed
     const primaryDisplay = screen.getPrimaryDisplay()
-    const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
-    const [windowWidth, windowHeight] = mainWindow.getSize()
+    const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea
+    const [windowWidth] = mainWindow.getSize()
 
-    const x = screenWidth - windowWidth
-    const y = Math.floor((screenHeight - windowHeight) / 2)
+    const x = displayX + screenWidth - windowWidth
+    const y = displayY  // Use the display's y offset (accounts for menu bar)
 
     mainWindow.setPosition(x, y)
     mainWindow.showInactive() // Show without taking focus
