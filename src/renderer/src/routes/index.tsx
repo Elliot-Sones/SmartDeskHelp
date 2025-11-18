@@ -1,7 +1,7 @@
 import { createHashRouter } from 'react-router-dom'
-import { RootLayout } from './layouts/RootLayout'
-import { HomePage } from './pages/HomePage'
-import { SettingsPage } from './pages/SettingsPage'
+import { RootLayout } from './layouts/root-layout'
+import { HomePage } from './pages/home-page'
+import { SettingsPage } from './pages/settings-page'
 
 export const router = createHashRouter([
   {
@@ -14,7 +14,7 @@ export const router = createHashRouter([
       },
       {
         path: '/settings',
-        element: <SettingsPage/>
+        element: <SettingsPage />
       }
     ]
   }
