@@ -7,8 +7,17 @@ const settingsApi = {
   update: (data: any) => ipcRenderer.invoke('settings:update', data)
 }
 
+const foldersApi = {
+  list: () => ipcRenderer.invoke('folders:list'),
+  create: (data: any) => ipcRenderer.invoke('folders:create', data),
+  update: (id: number, data: any) => ipcRenderer.invoke('folders:update', id, data),
+  delete: (id: number) => ipcRenderer.invoke('folders:delete', id),
+  getByPath: (path: string) => ipcRenderer.invoke('folders:getByPath', path)
+}
+
 const api = {
-  settings: settingsApi
+  settings: settingsApi,
+  folders: foldersApi
 }
 
 export function exposeApi() {
