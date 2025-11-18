@@ -3,7 +3,9 @@ import { useSettings } from '@renderer/hooks/use-settings'
 
 function getMessage() {
   const hours = new Date().getHours()
-  if (hours < 12) {
+  if (hours < 4) {
+    return 'Happy late night'
+  } else if (hours < 12) {
     return 'Good morning'
   } else if (hours < 18) {
     return 'Good afternoon'
