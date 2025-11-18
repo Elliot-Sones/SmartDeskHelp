@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1763391921893,
-      "tag": "0000_tiresome_thena",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1763411002065,
-      "tag": "0001_nappy_marvel_boy",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1763411254467,
-      "tag": "0002_ambitious_ultron",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1763446823546,
-      "tag": "0003_old_absorbing_man",
+      "when": 1763504936224,
+      "tag": "0000_thick_prism",
       "breakpoints": true
     }
   ]
