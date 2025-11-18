@@ -1,11 +1,22 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, globalShortcut, ipcMain, screen, shell } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  screen,
+  shell,
+  Tray,
+  Menu,
+  nativeImage
+} from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { runMigrations, initializeSettings } from './db'
 import { registerAllApis } from './api'
 
 let mainWindow: BrowserWindow | null = null
+let tray: Tray | null = null
 
 function createWindow(): void {
   // Get the primary display's work area
@@ -53,10 +64,10 @@ function createWindow(): void {
     const primaryDisplay = screen.getPrimaryDisplay()
     const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea
     const [windowWidth] = mainWindow!.getSize()
-    
+
     const x = displayX + screenWidth - windowWidth
-    const y = displayY  // Use the display's y offset (accounts for menu bar)
-    
+    const y = displayY // Use the display's y offset (accounts for menu bar)
+
     mainWindow!.setPosition(x, y)
     // Don't show automatically - wait for the global shortcut
   })
@@ -90,11 +101,48 @@ function toggleWindow(): void {
     const [windowWidth] = mainWindow.getSize()
 
     const x = displayX + screenWidth - windowWidth
-    const y = displayY  // Use the display's y offset (accounts for menu bar)
+    const y = displayY // Use the display's y offset (accounts for menu bar)
 
     mainWindow.setPosition(x, y)
     mainWindow.showInactive() // Show without taking focus
   }
+}
+
+function createTray(): void {
+  const iconPath = join(__dirname, '../../resources/dock-icon.png')
+  const trayIcon = nativeImage.createFromPath(iconPath)
+  const scaledIcon = trayIcon.resize({ width: 20, height: 20 })
+
+  tray = new Tray(scaledIcon)
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Kel — ' + app.getVersion(),
+      enabled: false
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: 'Talk to Kel',
+      accelerator: 'ctrl+k',
+      click: () => {
+        toggleWindow()
+      }
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: 'Quit',
+      accelerator: 'cmd+q',
+      click: () => {
+        app.quit()
+      }
+    }
+  ])
+
+  tray.setContextMenu(contextMenu)
 }
 
 // This method will be called when Electron has finished
@@ -102,13 +150,13 @@ function toggleWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   // Run database migrations
-  await runMigrations();
-  
+  await runMigrations()
+
   // Initialize settings with default values if needed
-  await initializeSettings();
+  await initializeSettings()
 
   // Register all IPC handlers
-  registerAllApis();
+  registerAllApis()
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
@@ -124,6 +172,11 @@ app.whenReady().then(async () => {
   ipcMain.on('ping', () => console.log('pong'))
 
   createWindow()
+
+  // Create menu bar icon on macOS
+  if (process.platform === 'darwin') {
+    createTray()
+  }
 
   // Register global shortcut Control+K (or Command+K on macOS)
   const ret = globalShortcut.register('Control+K', () => {
