@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useSettings } from '@renderer/hooks/use-settings'
+import { useTitlebar } from '@renderer/hooks/use-titlebar'
 
 export function HomePage() {
   const { settings, isLoading, error } = useSettings()
+  useTitlebar({ title: 'Kel' })
 
   return (
     <div className="p-4">
