@@ -1,30 +1,15 @@
 import { ipcMain } from 'electron'
 import { eq } from 'drizzle-orm'
-import type { InferSelectModel } from 'drizzle-orm'
-import { db } from '../db'
-import { folders } from '../db/tables/folders'
-
-export type Folder = InferSelectModel<typeof folders>
-
-export interface CreateFolderData {
-  path: string
-  name: string
-  isFavorite?: boolean
-}
-
-export interface UpdateFolderData {
-  name?: string
-  isFavorite?: boolean
-  lastAccessedAt?: Date
-}
-
-export interface FoldersApi {
-  list: () => Promise<Folder[]>
-  create: (data: CreateFolderData) => Promise<Folder>
-  update: (id: number, data: UpdateFolderData) => Promise<Folder | null>
-  delete: (id: number) => Promise<boolean>
-  getByPath: (path: string) => Promise<Folder | null>
-}
+import { db } from '../../db'
+import { folders } from '../../db/tables/folders'
+import {
+  createFolderSchema,
+  updateFolderSchema,
+  type Folder,
+  type FoldersApi,
+  type CreateFolderData,
+  type UpdateFolderData
+} from './schema'
 
 export function createFoldersApi(ipcRenderer: any): FoldersApi {
   return {
@@ -36,22 +21,24 @@ export function createFoldersApi(ipcRenderer: any): FoldersApi {
   }
 }
 
-export function registerFoldersApi() {
+export function registerFoldersHandlers() {
   ipcMain.handle('folders:list', async (): Promise<Folder[]> => {
     return await db.select().from(folders)
   })
 
   ipcMain.handle('folders:create', async (_event, data: CreateFolderData): Promise<Folder> => {
-    const result = await db.insert(folders).values(data).returning()
+    const validated = createFolderSchema.parse(data)
+    const result = await db.insert(folders).values(validated).returning()
     return result[0]
   })
 
   ipcMain.handle(
     'folders:update',
     async (_event, id: number, data: UpdateFolderData): Promise<Folder | null> => {
+      const validated = updateFolderSchema.parse(data)
       await db
         .update(folders)
-        .set({ ...data, updatedAt: new Date() })
+        .set({ ...validated, updatedAt: new Date() })
         .where(eq(folders.id, id))
 
       const result = await db.select().from(folders).where(eq(folders.id, id))

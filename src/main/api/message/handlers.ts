@@ -1,22 +1,13 @@
 import { ipcMain } from 'electron'
 import { eq } from 'drizzle-orm'
-import type { InferSelectModel } from 'drizzle-orm'
-import { db } from '../db'
-import { message } from '../db/tables/message'
-
-export type Message = InferSelectModel<typeof message>
-
-export interface CreateMessageData {
-  chatId: number
-  role: 'user' | 'assistant'
-  content: string
-}
-
-export interface MessageApi {
-  listByChatId: (chatId: number) => Promise<Message[]>
-  create: (data: CreateMessageData) => Promise<Message>
-  delete: (id: number) => Promise<boolean>
-}
+import { db } from '../../db'
+import { message } from '../../db/tables/message'
+import {
+  createMessageSchema,
+  type Message,
+  type MessageApi,
+  type CreateMessageData
+} from './schema'
 
 export function createMessageApi(ipcRenderer: any): MessageApi {
   return {
@@ -26,7 +17,7 @@ export function createMessageApi(ipcRenderer: any): MessageApi {
   }
 }
 
-export function registerMessageApi() {
+export function registerMessageHandlers() {
   ipcMain.handle('message:listByChatId', async (_event, chatId: number): Promise<Message[]> => {
     return await db
       .select()
@@ -36,7 +27,8 @@ export function registerMessageApi() {
   })
 
   ipcMain.handle('message:create', async (_event, data: CreateMessageData): Promise<Message> => {
-    const result = await db.insert(message).values(data).returning()
+    const validated = createMessageSchema.parse(data)
+    const result = await db.insert(message).values(validated).returning()
     return result[0]
   })
 

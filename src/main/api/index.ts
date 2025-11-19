@@ -1,14 +1,17 @@
 import { registerSettingsHandlers } from './settings/handlers'
-import { registerFoldersApi } from './folders'
-import { registerChatApi } from './chat'
-import { registerMessageApi } from './message'
+import { registerFoldersHandlers } from './folders/handlers'
+import { registerChatHandlers } from './chat/handlers'
+import { registerMessageHandlers } from './message/handlers'
 
 export function registerAllApis() {
   registerSettingsHandlers()
-  registerFoldersApi()
-  registerChatApi()
-  registerMessageApi()
+  registerFoldersHandlers()
+  registerChatHandlers()
+  registerMessageHandlers()
 }
 
 // Re-export schemas for type-safe imports (safe for client-side)
 export * from './settings/schema'
+export * from './chat/schema'
+export * from './folders/schema'
+export * from './message/schema'

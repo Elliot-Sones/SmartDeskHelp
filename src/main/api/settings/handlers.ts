@@ -2,7 +2,19 @@ import { ipcMain } from 'electron'
 import { eq } from 'drizzle-orm'
 import { db } from '../../db'
 import { settings } from '../../db/tables/settings'
-import { updateSettingsSchema, type Settings, type UpdateSettings } from './schema'
+import {
+  updateSettingsSchema,
+  type Settings,
+  type SettingsApi,
+  type UpdateSettings
+} from './schema'
+
+export function createSettingsApi(ipcRenderer: any): SettingsApi {
+  return {
+    get: () => ipcRenderer.invoke('settings:get'),
+    update: (data) => ipcRenderer.invoke('settings:update', data)
+  }
+}
 
 export function registerSettingsHandlers() {
   ipcMain.handle('settings:get', async (): Promise<Settings | null> => {
@@ -13,7 +25,6 @@ export function registerSettingsHandlers() {
   ipcMain.handle(
     'settings:update',
     async (_event, data: UpdateSettings): Promise<Settings | null> => {
-      // Validate the input data
       const validated = updateSettingsSchema.parse(data)
 
       await db
