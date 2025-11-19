@@ -15,9 +15,25 @@ const foldersApi = {
   getByPath: (path: string) => ipcRenderer.invoke('folders:getByPath', path)
 }
 
+const chatApi = {
+  list: () => ipcRenderer.invoke('chat:list'),
+  create: (data: any) => ipcRenderer.invoke('chat:create', data),
+  update: (id: number, data: any) => ipcRenderer.invoke('chat:update', id, data),
+  delete: (id: number) => ipcRenderer.invoke('chat:delete', id),
+  get: (id: number) => ipcRenderer.invoke('chat:get', id)
+}
+
+const messageApi = {
+  listByChatId: (chatId: number) => ipcRenderer.invoke('message:listByChatId', chatId),
+  create: (data: any) => ipcRenderer.invoke('message:create', data),
+  delete: (id: number) => ipcRenderer.invoke('message:delete', id)
+}
+
 const api = {
   settings: settingsApi,
-  folders: foldersApi
+  folders: foldersApi,
+  chat: chatApi,
+  message: messageApi
 }
 
 export function exposeApi() {
