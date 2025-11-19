@@ -2,7 +2,7 @@ import { useTitlebar } from '@renderer/hooks/use-titlebar'
 import { useSettings, useAutoSaveSettings } from '@renderer/hooks/use-settings'
 import { useState, useEffect } from 'react'
 import { z } from 'zod'
-import { Check, Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -75,7 +75,7 @@ export function SettingsPage() {
       <div className="h-20"></div>
       <div className="px-6 py-4 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Settings</h2>
+          <h2 className="text-lg font-[550] tracking-tight">Settings</h2>
           <SaveIndicator status={saveStatus} />
         </div>
 
@@ -156,9 +156,12 @@ function SettingsField({
 function SaveIndicator({ status }: { status: 'idle' | 'saving' | 'saved' | 'error' }) {
   if (status === 'idle') return null
 
+  if (status === 'saved') {
+    return <div className="text-xs text-muted-foreground">Saved</div>
+  }
+
   const config = {
     saving: { icon: Loader2, text: 'Saving...', className: 'text-muted-foreground', animate: true },
-    saved: { icon: Check, text: 'Saved', className: 'text-green-600', animate: false },
     error: {
       icon: AlertCircle,
       text: 'Error saving',
