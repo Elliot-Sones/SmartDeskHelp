@@ -17,6 +17,7 @@ import { registerAllApis } from './api'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+let windowPosition: 'left' | 'right' = 'right' // Start on the right by default
 
 function createWindow(): void {
   // Get the primary display's work area
@@ -100,12 +101,29 @@ function toggleWindow(): void {
     const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea
     const [windowWidth] = mainWindow.getSize()
 
-    const x = displayX + screenWidth - windowWidth
+    const x = windowPosition === 'right' ? displayX + screenWidth - windowWidth : displayX
     const y = displayY // Use the display's y offset (accounts for menu bar)
 
     mainWindow.setPosition(x, y)
     mainWindow.showInactive() // Show without taking focus
   }
+}
+
+function cycleWindowPosition(): void {
+  if (!mainWindow) return
+
+  // Cycle the position state
+  windowPosition = windowPosition === 'right' ? 'left' : 'right'
+
+  // Reposition the window
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea
+  const [windowWidth] = mainWindow.getSize()
+
+  const x = windowPosition === 'right' ? displayX + screenWidth - windowWidth : displayX
+  const y = displayY
+
+  mainWindow.setPosition(x, y)
 }
 
 function createTray(): void {
@@ -128,6 +146,13 @@ function createTray(): void {
       accelerator: 'ctrl+k',
       click: () => {
         toggleWindow()
+      }
+    },
+    {
+      label: 'Cycle Window Position',
+      accelerator: 'ctrl+option+k',
+      click: () => {
+        cycleWindowPosition()
       }
     },
     {
@@ -185,6 +210,15 @@ app.whenReady().then(async () => {
 
   if (!ret) {
     console.log('Global shortcut registration failed')
+  }
+
+  // Register global shortcut Control+L to cycle window position
+  const ret2 = globalShortcut.register('Control+Option+K', () => {
+    cycleWindowPosition()
+  })
+
+  if (!ret2) {
+    console.log('Control+L shortcut registration failed')
   }
 
   app.on('activate', function () {
