@@ -1,21 +1,12 @@
-import { ipcMain } from 'electron'
 import { eq } from 'drizzle-orm'
+import { ipcMain } from 'electron'
 import { db } from '../../db'
 import { message } from '../../db/tables/message'
 import {
   createMessageSchema,
-  type Message,
-  type MessageApi,
-  type CreateMessageData
+  type CreateMessageData,
+  type Message
 } from './schema'
-
-export function createMessageApi(ipcRenderer: any): MessageApi {
-  return {
-    listByChatId: (chatId) => ipcRenderer.invoke('message:listByChatId', chatId),
-    create: (data) => ipcRenderer.invoke('message:create', data),
-    delete: (id) => ipcRenderer.invoke('message:delete', id)
-  }
-}
 
 export function registerMessageHandlers() {
   ipcMain.handle('message:listByChatId', async (_event, chatId: number): Promise<Message[]> => {

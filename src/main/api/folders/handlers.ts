@@ -1,25 +1,14 @@
-import { ipcMain } from 'electron'
 import { eq } from 'drizzle-orm'
+import { ipcMain } from 'electron'
 import { db } from '../../db'
 import { folders } from '../../db/tables/folders'
 import {
   createFolderSchema,
   updateFolderSchema,
-  type Folder,
-  type FoldersApi,
   type CreateFolderData,
+  type Folder,
   type UpdateFolderData
 } from './schema'
-
-export function createFoldersApi(ipcRenderer: any): FoldersApi {
-  return {
-    list: () => ipcRenderer.invoke('folders:list'),
-    create: (data) => ipcRenderer.invoke('folders:create', data),
-    update: (id, data) => ipcRenderer.invoke('folders:update', id, data),
-    delete: (id) => ipcRenderer.invoke('folders:delete', id),
-    getByPath: (path) => ipcRenderer.invoke('folders:getByPath', path)
-  }
-}
 
 export function registerFoldersHandlers() {
   ipcMain.handle('folders:list', async (): Promise<Folder[]> => {

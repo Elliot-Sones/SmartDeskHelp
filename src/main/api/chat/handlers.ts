@@ -1,25 +1,14 @@
+import { desc, eq } from 'drizzle-orm'
 import { ipcMain } from 'electron'
-import { eq, desc } from 'drizzle-orm'
 import { db } from '../../db'
 import { chat } from '../../db/tables/chat'
 import {
   createChatSchema,
   updateChatSchema,
   type Chat,
-  type ChatApi,
   type CreateChatData,
   type UpdateChatData
 } from './schema'
-
-export function createChatApi(ipcRenderer: any): ChatApi {
-  return {
-    list: () => ipcRenderer.invoke('chat:list'),
-    create: (data) => ipcRenderer.invoke('chat:create', data),
-    update: (id, data) => ipcRenderer.invoke('chat:update', id, data),
-    delete: (id) => ipcRenderer.invoke('chat:delete', id),
-    get: (id) => ipcRenderer.invoke('chat:get', id)
-  }
-}
 
 export function registerChatHandlers() {
   ipcMain.handle('chat:list', async (): Promise<Chat[]> => {
