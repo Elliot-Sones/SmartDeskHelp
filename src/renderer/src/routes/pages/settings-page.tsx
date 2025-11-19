@@ -1,11 +1,16 @@
 import { useTitlebar } from '@renderer/hooks/use-titlebar'
-import { Input } from '@renderer/components/ui/input'
 import { useSettings, useAutoSaveSettings } from '@renderer/hooks/use-settings'
 import { useState, useEffect } from 'react'
 import { z } from 'zod'
 import { Check, Loader2, AlertCircle } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
 
-// Client-side validation schema
 const settingsFormSchema = z.object({
   preferredName: z.string().min(1, 'Preferred name is required').max(100),
   apiKey: z.string().min(1).max(500).nullable(),
@@ -43,16 +48,11 @@ export function SettingsPage() {
     const newData = { ...formData, [field]: value || null }
     setFormData(newData)
 
-    // Validate
     const result = settingsFormSchema.safeParse(newData)
-
     if (result.success) {
-      // Clear error for this field
       setErrors((prev) => ({ ...prev, [field]: undefined }))
-      // Save to backend
       mutate({ [field]: value || null })
     } else {
-      // Set errors
       const fieldError = result.error.issues.find((e) => e.path[0] === field)
       if (fieldError) {
         setErrors((prev) => ({ ...prev, [field]: fieldError.message }))
@@ -62,78 +62,94 @@ export function SettingsPage() {
 
   if (isLoading) {
     return (
-      <>
-        <div className="h-20"></div>
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-center text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-          </div>
+      <div className="h-20">
+        <div className="px-6 py-4 flex items-center justify-center text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
         </div>
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div>
       <div className="h-20"></div>
       <div className="px-6 py-4 space-y-6">
-        {/* Header with save indicator */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Settings</h2>
           <SaveIndicator status={saveStatus} />
         </div>
 
-        {/* Preferred Name */}
-        <div className="space-y-1.5">
-          <label htmlFor="preferredName" className="text-sm font-medium">
-            Preferred Name
-          </label>
-          <Input
-            id="preferredName"
-            value={formData.preferredName}
-            onChange={(e) => validateAndSave('preferredName', e.target.value)}
-            placeholder="Enter your name"
-            aria-invalid={!!errors.preferredName}
-          />
-          {errors.preferredName && (
-            <p className="text-xs text-destructive">{errors.preferredName}</p>
-          )}
-        </div>
+        <SettingsField
+          id="preferredName"
+          label="Preferred Name"
+          value={formData.preferredName}
+          onChange={(value) => validateAndSave('preferredName', value)}
+          error={errors.preferredName}
+          placeholder="Enter your name"
+        />
 
-        {/* API Key Type */}
         <div className="space-y-1.5">
-          <label htmlFor="apiKeyType" className="text-sm font-medium">
-            API Provider
-          </label>
-          <select
-            id="apiKeyType"
+          <label className="text-sm font-medium">API Provider</label>
+          <Select
             value={formData.apiKeyType || ''}
-            onChange={(e) => validateAndSave('apiKeyType', e.target.value || null)}
-            className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+            onValueChange={(value) => validateAndSave('apiKeyType', value || null)}
           >
-            <option value="">Select provider</option>
-            <option value="Openrouter">Openrouter</option>
-            <option value="Anthropic">Anthropic</option>
-          </select>
+            <SelectTrigger>
+              <SelectValue placeholder="Select provider" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Openrouter">Openrouter</SelectItem>
+              <SelectItem value="Anthropic">Anthropic</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* API Key */}
-        <div className="space-y-1.5">
-          <label htmlFor="apiKey" className="text-sm font-medium">
-            API Key
-          </label>
-          <Input
-            id="apiKey"
-            type="password"
-            value={formData.apiKey || ''}
-            onChange={(e) => validateAndSave('apiKey', e.target.value)}
-            placeholder="Enter your API key"
-            aria-invalid={!!errors.apiKey}
-          />
-          {errors.apiKey && <p className="text-xs text-destructive">{errors.apiKey}</p>}
-        </div>
+        <SettingsField
+          id="apiKey"
+          label="API Key"
+          type="password"
+          value={formData.apiKey || ''}
+          onChange={(value) => validateAndSave('apiKey', value)}
+          error={errors.apiKey}
+          placeholder="Enter your API key"
+        />
       </div>
-    </>
+    </div>
+  )
+}
+
+function SettingsField({
+  id,
+  label,
+  type = 'text',
+  value,
+  onChange,
+  error,
+  placeholder
+}: {
+  id: string
+  label: string
+  type?: string
+  value: string
+  onChange: (value: string) => void
+  error?: string
+  placeholder: string
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+      />
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
   )
 }
 
