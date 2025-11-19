@@ -1,7 +1,8 @@
 import { z } from 'zod'
+import { apiKeyTypeEnum } from '../../db/tables/settings'
 
 // API key type enum
-export const apiKeyTypeEnum = ['Openrouter', 'Anthropic'] as const
+
 
 // Zod schema for settings validation
 export const settingsSchema = z.object({

@@ -10,14 +10,16 @@ import {
   SelectTrigger,
   SelectValue
 } from '@renderer/components/ui/select'
+import { Label } from '@renderer/components/ui/label'
+import { Input } from '@renderer/components/ui/input'
 
-const settingsFormSchema = z.object({
+const updateSettingsSchema = z.object({
   preferredName: z.string().min(1, 'Preferred name is required').max(100),
   apiKey: z.string().min(1).max(500).nullable(),
-  apiKeyType: z.enum(['Openrouter', 'Anthropic']).nullable()
+  apiKeyType: z.enum(['openrouter', 'anthropic']).nullable()
 })
 
-type SettingsForm = z.infer<typeof settingsFormSchema>
+type SettingsForm = z.infer<typeof updateSettingsSchema>
 type FieldErrors = Partial<Record<keyof SettingsForm, string>>
 
 export function SettingsPage() {
@@ -48,7 +50,7 @@ export function SettingsPage() {
     const newData = { ...formData, [field]: value || null }
     setFormData(newData)
 
-    const result = settingsFormSchema.safeParse(newData)
+    const result = updateSettingsSchema.safeParse(newData)
     if (result.success) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
       mutate({ [field]: value || null })
@@ -72,36 +74,44 @@ export function SettingsPage() {
 
   return (
     <div>
-      <div className="h-20"></div>
-      <div className="px-6 py-4 space-y-6">
+      <div className="h-32"></div>
+      <div className="px-4 py-4 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-[550] tracking-tight">Settings</h2>
+          {/* <h2 className="text-lg font-[550] tracking-tight">Settings</h2> */}
+          <svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width='48' height='48'>
+            {' '}
+            <path
+              d="M4 5h16v2H4V5zm0 12H2V7h2v10zm16 0v2H4v-2h16zm0 0h2V7h-2v10zm-2-8h-4v6h4V9z"
+              fill="currentColor"
+            />{' '}
+          </svg>
           <SaveIndicator status={saveStatus} />
         </div>
+        <div className="flex items-start gap-2">
+          <SettingsField
+            id="preferredName"
+            label="Preferred Name"
+            value={formData.preferredName}
+            onChange={(value) => validateAndSave('preferredName', value)}
+            error={errors.preferredName}
+            placeholder="Enter your name"
+          />
 
-        <SettingsField
-          id="preferredName"
-          label="Preferred Name"
-          value={formData.preferredName}
-          onChange={(value) => validateAndSave('preferredName', value)}
-          error={errors.preferredName}
-          placeholder="Enter your name"
-        />
-
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">API Provider</label>
-          <Select
-            value={formData.apiKeyType || ''}
-            onValueChange={(value) => validateAndSave('apiKeyType', value || null)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select provider" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Openrouter">Openrouter</SelectItem>
-              <SelectItem value="Anthropic">Anthropic</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-1.5">
+            <Label className="mb-2 text-xs">API Provider</Label>
+            <Select
+              value={formData.apiKeyType || ''}
+              onValueChange={(value) => validateAndSave('apiKeyType', value || null)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select provider" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="openrouter">OpenRouter</SelectItem>
+                <SelectItem value="anthropic">Anthropic</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <SettingsField
@@ -136,17 +146,16 @@ function SettingsField({
   placeholder: string
 }) {
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="text-sm font-medium">
+    <div className="space-y-1.5 flex-grow">
+      <Label htmlFor={id} className="mb-2 text-xs">
         {label}
-      </label>
-      <input
+      </Label>
+      <Input
         id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>

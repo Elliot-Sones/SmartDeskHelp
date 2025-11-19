@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
-export const apiKeyTypeEnum = ['Openrouter', 'Anthropic'] as const;
+export const apiKeyTypeEnum = ['openrouter', 'anthropic'] as const;
 
 export const settings = sqliteTable('settings', {
   id: integer('id').primaryKey().default(0),

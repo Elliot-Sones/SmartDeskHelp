@@ -25,7 +25,7 @@ export function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <TitlebarContext.Provider value={{ title, setTitle }}>
-        <div className="bg-background/75 text-foreground h-[100vh] border dark:border-f-800/75 border-f-200/75 flex flex-col">
+        <div className="bg-background/75 text-foreground h-[100vh] border dark:border-f-800/75 border-f-200/75 flex flex-col overflow-x-hidden">
           <Titlebar />
           <Outlet />
         </div>
