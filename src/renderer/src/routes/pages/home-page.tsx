@@ -13,7 +13,7 @@ export function HomePage() {
         <Greeting />
       </div>
       <div className="h-8"></div>
-      <div className="p-4 text-sm text-f-300">Recents</div>
+      <div className="p-4 text-xs text-f-300">Recents</div>
       <pre className="text-sm p-4">{JSON.stringify(chats, null, 2)}</pre>
       <div className='flex-grow'></div>
       <textarea
