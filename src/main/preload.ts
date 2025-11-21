@@ -6,14 +6,6 @@ const settingsApi = {
   update: (data) => ipcRenderer.invoke('settings:update', data)
 }
 
-const foldersApi = {
-  list: () => ipcRenderer.invoke('folders:list'),
-  create: (data) => ipcRenderer.invoke('folders:create', data),
-  update: (id, data) => ipcRenderer.invoke('folders:update', id, data),
-  delete: (id) => ipcRenderer.invoke('folders:delete', id),
-  getByPath: (path) => ipcRenderer.invoke('folders:getByPath', path)
-}
-
 const chatApi = {
   list: () => ipcRenderer.invoke('chat:list'),
   create: (data) => ipcRenderer.invoke('chat:create', data),
@@ -30,7 +22,6 @@ const messageApi = {
 
 const api = {
   settings: settingsApi,
-  folders: foldersApi,
   chat: chatApi,
   message: messageApi
 }
