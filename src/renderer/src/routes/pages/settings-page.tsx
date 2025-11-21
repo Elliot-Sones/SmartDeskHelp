@@ -51,8 +51,14 @@ export function SettingsPage() {
     }
   }, [settings, form])
 
-  const handleFieldChange = (field: keyof SettingsForm, value: string | null) => {
-    mutate({ [field]: value || null })
+  const handleFieldChange = async (field: keyof SettingsForm, value: string | null) => {
+    // Trigger validation for the field
+    const isValid = await form.trigger(field)
+
+    // Only save if valid
+    if (isValid) {
+      mutate({ [field]: value || null })
+    }
   }
 
   if (isLoading) {

@@ -19,10 +19,19 @@ export const settingsSchema = z.object({
 })
 
 export const updateSettingsSchema = z.object({
-  preferredName: z.string().min(1, 'Preferred name is required').max(100).optional(),
-  apiKey: z.string().min(1).max(500).nullable().optional(),
+  preferredName: z
+    .string()
+    .min(1, 'Name cannot be empty')
+    .max(100, 'Name must be less than 100 characters')
+    .optional(),
+  apiKey: z
+    .string()
+    .min(1, 'API key cannot be empty')
+    .max(500, 'API key is too long')
+    .nullable()
+    .optional(),
   apiKeyType: z.enum(apiKeyTypeEnum).nullable().optional(),
-  selectedModel: z.enum(SupportedModels).optional(),
+  selectedModel: z.enum(SupportedModels).optional()
 })
 
 // TypeScript types
