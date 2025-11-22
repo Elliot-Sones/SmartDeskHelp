@@ -6,11 +6,15 @@ import { ComposeMessage } from '@renderer/components/compose-message'
 import { useSettings } from '@renderer/hooks/use-settings'
 import Markdown from 'react-markdown'
 import { Avatar, AvatarFallback } from '@renderer/components/ui/avatar'
+import { useAiStreaming } from '@renderer/hooks/use-ai'
+import { CopyIcon } from 'lucide-react'
+import { cn } from '../../lib/utils'
 
 export function ChatPage() {
   const { id } = useParams<{ id: string }>()
   const chat = useChat(Number(id))
   const { data: messages } = useMessages(Number(id))
+  const { isStreaming } = useAiStreaming(Number(id))
   const { settings } = useSettings()
 
   useTitlebar({ title: chat.data?.title || 'New Chat' })
@@ -19,7 +23,7 @@ export function ChatPage() {
     <div className="flex flex-col flex-grow overflow-hidden">
       <div className="flex-grow overflow-y-auto px-4 flex flex-col gap-2" tabIndex={-1}>
         <div className="my-0.5"></div>
-        {messages?.map((message) =>
+        {messages?.map((message, index) =>
           message.role === 'user' ? (
             <div
               key={message.id}
@@ -37,6 +41,15 @@ export function ChatPage() {
           ) : (
             <div key={message.id} className="mb-4 whitespace-pre-wrap text-sm">
               <Markdown>{message.content}</Markdown>
+
+              <div
+                className={cn(
+                  'mt-4 text-f-500',
+                  !isStreaming && index === messages.length - 1 && 'animate-in fade-in'
+                )}
+              >
+                <CopyIcon className="size-3" />
+              </div>
             </div>
           )
         )}
