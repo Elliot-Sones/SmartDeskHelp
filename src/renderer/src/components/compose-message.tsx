@@ -32,7 +32,7 @@ export function ComposeMessage() {
             <Button
               onClick={handleSend}
               size="sm"
-              className="text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px]"
+              className="text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px] bg-[#c15f3c] text-white"
               disabled={!prompt.trim()}
             >
               <ArrowUpIcon />
