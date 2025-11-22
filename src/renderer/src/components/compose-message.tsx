@@ -30,7 +30,6 @@ export function ComposeMessage({ chatId }: ComposeMessageProps) {
         onSuccess: (result) => {
           setPrompt('')
           if (!chatId) navigate(`/chat/${result.chatId}`)
-          // Invalidate messages for existing chat to show the new message
           if (chatId) {
             queryClient.invalidateQueries({ queryKey: [messageKey, chatId] })
           }

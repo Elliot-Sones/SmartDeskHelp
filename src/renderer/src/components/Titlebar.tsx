@@ -2,6 +2,8 @@ import { useTitlebar } from '@renderer/hooks/use-titlebar'
 import { ArrowLeft, ArrowRight, CogIcon } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { useAiStreaming, useCreateNewChat } from '@renderer/hooks/use-ai'
+import { Spinner } from '@renderer/components/ui/spinner'
 
 export function Titlebar() {
   const { title } = useTitlebar()
@@ -9,6 +11,9 @@ export function Titlebar() {
   const location = useLocation()
   const [canGoBack, setCanGoBack] = useState(false)
   const [canGoForward, setCanGoForward] = useState(false)
+  const { isStreaming } = useAiStreaming()
+  const { isPending } = useCreateNewChat()
+  const isOnChatPage = location.pathname.startsWith('/chat/')
 
   useEffect(() => {
     // Check if we can navigate back/forward using the history state
@@ -56,7 +61,7 @@ export function Titlebar() {
             <ArrowRight className="w-3.5 h-3.5 group-hover:text-f-300" />
           </button>
         </div>
-        <div className='max-w-48 truncate whitespace-nowrap overflow-hidden'>{title}</div>
+        <div className="max-w-48 truncate whitespace-nowrap overflow-hidden">{title}</div>
         <div className="absolute right-1 p-0.5 hover:bg-f-850 group rounded">
           <button
             onClick={handleSettings}
@@ -64,7 +69,11 @@ export function Titlebar() {
             className="group-hover:text-f-300 flex"
             aria-label="Settings"
           >
-            <CogIcon className="w-3.5 h-3.5" />
+            {(isStreaming || isPending) && isOnChatPage ? (
+              <Spinner className="w-3.5 h-3.5" />
+            ) : (
+              <CogIcon className="w-3.5 h-3.5" />
+            )}
           </button>
         </div>
       </div>

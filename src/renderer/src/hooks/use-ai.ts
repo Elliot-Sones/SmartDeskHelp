@@ -25,19 +25,15 @@ export function useAiStreaming(chatId?: number) {
   const isAbortedRef = useRef(false)
 
   useEffect(() => {
-    // Reset aborted flag when chatId changes (new chat started)
     isAbortedRef.current = false
 
     const unsubscribe = window.api.ai.onStream((event) => {
       if (!chatId || event.chatId === chatId) {
-        // Ignore all events if we've aborted
-        if (isAbortedRef.current) {
-          return
-        }
+        if (isAbortedRef.current) return
 
         if (event.chunk.type === 'finish' || event.chunk.type === 'error') {
           setIsStreaming(false)
-          isAbortedRef.current = false // Reset for next stream
+          isAbortedRef.current = false
         } else if (event.chunk.type === 'text-delta') {
           setIsStreaming(true)
         }

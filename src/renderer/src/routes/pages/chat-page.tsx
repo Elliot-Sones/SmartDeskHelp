@@ -9,6 +9,7 @@ import { useTitlebar } from '@renderer/hooks/use-titlebar'
 import { BracesIcon, CopyIcon } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { cn } from '../../lib/utils'
+import { Spinner } from '@renderer/components/ui/spinner'
 
 export function ChatPage() {
   const { id } = useParams<{ id: string }>()
