@@ -1,6 +1,7 @@
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from './ui/input-group'
 import { ModelSelector } from './model-selector'
 import { Button } from './ui/button'
+import { ArrowUpIcon } from 'lucide-react'
 
 export function ComposeMessage() {
   const handleSend = () => {
@@ -21,9 +22,9 @@ export function ComposeMessage() {
             <Button
               onClick={handleSend}
               size="sm"
-              className="text-xs h-7 rounded-sm px-5 mr-[-4px] mb-[-4px]"
+              className="text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px]"
             >
-              Send
+              <ArrowUpIcon/>
             </Button>
           </div>
         </InputGroupAddon>
