@@ -18,23 +18,24 @@ export function ChatPage() {
   return (
     <div className="flex flex-col flex-grow overflow-hidden">
       <div className="h-8"></div>
-      <div className="flex-grow overflow-y-auto px-4" tabIndex={-1}>
+      <div className="flex-grow overflow-y-auto px-4 flex flex-col gap-2" tabIndex={-1}>
         {/* <pre className="text-sm whitespace-pre-wrap break-words">
           {JSON.stringify(messages, null, 2)}
         </pre> */}
         {messages?.map((message) =>
           message.role === 'user' ? (
-            <div key={message.id} className="mb-4 flex items-start text-sm gap-3 bg-f-900 py-2 px-2 rounded-lg">
+            <div key={message.id} className="mb-4 flex text-sm gap-3 bg-f-900 py-2 px-2 rounded-lg">
               <Avatar>
-                <AvatarFallback className='bg-f-paper text-background'>{settings?.preferredName[0]}</AvatarFallback>
+                <AvatarFallback className="bg-f-paper text-background">
+                  {settings?.preferredName[0]}
+                </AvatarFallback>
               </Avatar>
-              <div className=''>
+              <div className="">
                 <Markdown>{message.content}</Markdown>
               </div>
             </div>
           ) : (
-            <div key={message.id} className="mb-4 whitespace-pre-wrap">
-              <div className="text-sm font-medium text-f-700 mb-1">Bot:</div>
+            <div key={message.id} className="mb-4 whitespace-pre-wrap text-sm">
               <Markdown>{message.content}</Markdown>
             </div>
           )
