@@ -47,7 +47,7 @@ export function ChatPage() {
           ) : (
             <div key={message.id} className="mb-4 text-sm">
               <MessageContent content={message.content} className="whitespace-pre-wrap" />
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleCopyMessage(message.content)}
                   tabIndex={-1}
