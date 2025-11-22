@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCreateNewChat, useAiStreaming } from '@renderer/hooks/use-ai'
-import { messageKey, type Message } from '@renderer/hooks/use-message'
+import { messageKey } from '@renderer/hooks/use-message'
 import { ModelSelector } from './model-selector'
 import { Button } from './ui/button'
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from './ui/input-group'
@@ -24,26 +24,16 @@ export function ComposeMessage({ chatId }: ComposeMessageProps) {
 
     const userMessage = prompt.trim()
 
-    // Immediately add user message to cache if we have a chatId
-    if (chatId) {
-      queryClient.setQueryData([messageKey, chatId], (old: Message[] = []) => [
-        ...old,
-        {
-          role: 'user' as const,
-          content: userMessage,
-          chatId,
-          createdAt: new Date(),
-          id: 0
-        }
-      ])
-    }
-
     createNewChat.mutate(
       { prompt: userMessage, chatId },
       {
         onSuccess: (result) => {
           setPrompt('')
           if (!chatId) navigate(`/chat/${result.chatId}`)
+          // Invalidate messages for existing chat to show the new message
+          if (chatId) {
+            queryClient.invalidateQueries({ queryKey: [messageKey, chatId] })
+          }
         },
         onError: (error) => {
           console.error('Failed to create chat:', error)

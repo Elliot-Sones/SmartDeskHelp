@@ -24,13 +24,13 @@ export function ChatPage() {
         </pre> */}
         {messages?.map((message) =>
           message.role === 'user' ? (
-            <div key={message.id} className="mb-4 flex text-sm gap-3 bg-f-900 py-2 px-2 rounded-lg">
-              <Avatar>
+            <div key={message.id} className="mb-4 flex text-sm gap-2 bg-f-900 py-2 pl-2 pr-3 rounded-lg w-fit">
+              <Avatar className='w-6 h-6 text-xs font-semibold'>
                 <AvatarFallback className="bg-f-paper text-background">
                   {settings?.preferredName[0]}
                 </AvatarFallback>
               </Avatar>
-              <div className="">
+              <div className="mt-0.25">
                 <Markdown>{message.content}</Markdown>
               </div>
             </div>
