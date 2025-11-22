@@ -27,7 +27,7 @@ export function ComposeMessage() {
   return (
     <div>
       <InputGroup
-        className="group border-y border-x-0 min-h-48 rounded-none dark:bg-transparent has-[[data-slot=input-group-control]:focus-visible]:bg-input/15 
+        className="group border-t border-x-0 min-h-48 border-b-0 rounded-none dark:bg-transparent has-[[data-slot=input-group-control]:focus-visible]:bg-input/15 
       has-[[data-slot=input-group-control]:focus-visible]:ring-0
       "
       >
