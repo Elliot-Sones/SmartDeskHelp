@@ -59,7 +59,9 @@ async function processAiStream(chatId: number) {
   const result = streamText({
     model: openrouter(selectedModel),
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    experimental_transform: smoothStream(),
+    experimental_transform: smoothStream({
+      delayInMs: 50
+    }),
     abortSignal: currentAbortController.signal
   })
 

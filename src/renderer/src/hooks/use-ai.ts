@@ -25,8 +25,12 @@ export function useAiStreaming(chatId?: number) {
 
   useEffect(() => {
     const unsubscribe = window.api.ai.onStream((event) => {
-      if (chatId && event.chatId === chatId) {
-        setIsStreaming(event.chunk.type !== 'finish')
+      if (!chatId || event.chatId === chatId) {
+        if (event.chunk.type === 'finish') {
+          setIsStreaming(false)
+        } else if (event.chunk.type === 'text-delta') {
+          setIsStreaming(true)
+        }
       }
     })
     return unsubscribe

@@ -1,7 +1,9 @@
 import { ArrowUpIcon, SquareIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCreateNewChat, useAiStreaming } from '@renderer/hooks/use-ai'
+import { messageKey, type Message } from '@renderer/hooks/use-message'
 import { ModelSelector } from './model-selector'
 import { Button } from './ui/button'
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from './ui/input-group'
@@ -13,14 +15,31 @@ interface ComposeMessageProps {
 export function ComposeMessage({ chatId }: ComposeMessageProps) {
   const [prompt, setPrompt] = useState('')
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const createNewChat = useCreateNewChat()
   const { isStreaming, abort } = useAiStreaming(chatId)
 
   const handleSend = async () => {
     if (!prompt.trim()) return
 
+    const userMessage = prompt.trim()
+
+    // Immediately add user message to cache if we have a chatId
+    if (chatId) {
+      queryClient.setQueryData([messageKey, chatId], (old: Message[] = []) => [
+        ...old,
+        {
+          role: 'user' as const,
+          content: userMessage,
+          chatId,
+          createdAt: new Date(),
+          id: 0
+        }
+      ])
+    }
+
     createNewChat.mutate(
-      { prompt: prompt.trim(), chatId },
+      { prompt: userMessage, chatId },
       {
         onSuccess: (result) => {
           setPrompt('')
@@ -68,7 +87,7 @@ export function ComposeMessage({ chatId }: ComposeMessageProps) {
                   ? 'text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px]'
                   : 'text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px] bg-[#c15f3c] hover:bg-[#d0704d] text-white'
               }
-              disabled={!isStreaming && (!prompt.trim() || createNewChat.isPending)}
+              disabled={isStreaming ? false : !prompt.trim() || createNewChat.isPending}
             >
               {isStreaming ? <SquareIcon className="size-3" /> : <ArrowUpIcon />}
             </Button>
