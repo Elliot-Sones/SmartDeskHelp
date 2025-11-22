@@ -63,7 +63,7 @@ export function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="h-20">
+      <div className="h-20 flex-grow">
         <div className="px-6 py-4 flex items-center justify-center text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
         </div>
@@ -72,7 +72,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div>
+    <div className='flex-grow'>
       <div className="h-32"></div>
       <div className="px-4 py-4 space-y-6">
         <div className="flex items-center justify-between">
