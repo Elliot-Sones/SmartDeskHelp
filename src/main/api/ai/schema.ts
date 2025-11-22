@@ -1,3 +1,4 @@
+import { TextStreamPart, ToolSet } from 'ai'
 import { z } from 'zod'
 
 export const SupportedModels = [
@@ -18,7 +19,13 @@ export type ChatNewResponse = {
   chatId: number
 }
 
+export type StreamEvent = {
+  chatId: number
+  chunk: TextStreamPart<ToolSet>
+}
+
 // Client-side API interface
 export interface AiApi {
   new: (data: CreateChatNewData) => Promise<ChatNewResponse>
+  onStream: (callback: (event: StreamEvent) => void) => () => void
 }

@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import type { InferElectron } from '@renderer/lib/types'
+import type { StreamEvent } from '@shared/schemas'
 
 export type Message = InferElectron<typeof window.api.message.listByChatId>
 export type CreateMessageData = Parameters<typeof window.api.message.create>[0]
@@ -7,11 +9,30 @@ export type CreateMessageData = Parameters<typeof window.api.message.create>[0]
 export const messageKey = ['message'] as const
 
 export function useMessages(chatId: number) {
-  return useQuery({
+  const [streamBuffer, setStreamBuffer] = useState<string>('')
+
+  const query = useQuery({
     queryKey: [messageKey, chatId],
     queryFn: async () => await window.api.message.listByChatId(chatId),
     enabled: chatId > 0
   })
+
+  useEffect(() => {
+    const unsubscribe = window.api.ai.onStream((event: StreamEvent) => {
+      if (event.chatId !== chatId) return
+
+      const { chunk } = event
+      if (chunk.type === 'text-delta') {
+        setStreamBuffer((prev) => prev + chunk.text)
+      } else if (chunk.type === 'finish' || chunk.type === 'error') {
+        setStreamBuffer('')
+      }
+    })
+
+    return unsubscribe
+  }, [chatId])
+
+  return { ...query, streamBuffer }
 }
 
 export function useCreateMessage() {

@@ -25,7 +25,12 @@ const messageApi: MessageApi = {
 }
 
 const aiApi: AiApi = {
-  new: (data) => ipcRenderer.invoke('chat:new', data)
+  new: (data) => ipcRenderer.invoke('chat:new', data),
+  onStream: (callback) => {
+    const listener = (_event, data) => callback(data)
+    ipcRenderer.on('chat:stream', listener)
+    return () => ipcRenderer.removeListener('chat:stream', listener)
+  }
 }
 
 const api = {
