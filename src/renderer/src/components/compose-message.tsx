@@ -6,9 +6,9 @@ import { InputGroup, InputGroupAddon, InputGroupTextarea } from './ui/input-grou
 
 export function ComposeMessage() {
   const [prompt, setPrompt] = useState('')
-  const handleSend = () => {
-    // TODO: Implement send message logic
-    alert(prompt)
+
+  const handleSend = async () => {
+    // TODO: Implement message sending logic
   }
 
   return (
@@ -33,6 +33,7 @@ export function ComposeMessage() {
               onClick={handleSend}
               size="sm"
               className="text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px]"
+              disabled={!prompt.trim()}
             >
               <ArrowUpIcon />
             </Button>

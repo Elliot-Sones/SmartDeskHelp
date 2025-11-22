@@ -11,7 +11,6 @@ export function RootLayout() {
         defaultOptions: {
           queries: {
             retry: 1,
-            staleTime: Infinity
           },
           mutations: {
             retry: 1
