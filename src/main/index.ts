@@ -14,6 +14,7 @@ import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { runMigrations, initializeSettings } from './db'
 import { registerAllApis } from './api'
+import { setMainWindow } from './api/ai/handlers'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -232,6 +233,11 @@ app.whenReady().then(async () => {
   ipcMain.on('ping', () => console.log('pong'))
 
   createWindow()
+
+  // Pass window reference to handlers
+  if (mainWindow) {
+    setMainWindow(mainWindow)
+  }
 
   // Create menu bar icon on macOS
   if (process.platform === 'darwin') {

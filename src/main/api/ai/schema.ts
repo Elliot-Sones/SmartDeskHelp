@@ -1,3 +1,4 @@
+import { TextStreamPart, ToolSet } from 'ai'
 import { z } from 'zod'
 
 export const SupportedModels = [
@@ -8,7 +9,8 @@ export type SupportedModel = (typeof SupportedModels)[number]
 
 // Zod schemas for validation
 export const createChatNewSchema = z.object({
-  prompt: z.string().min(1, 'Prompt is required')
+  prompt: z.string().min(1, 'Prompt is required'),
+  chatId: z.number().int().positive().optional()
 })
 
 // TypeScript types
@@ -18,7 +20,13 @@ export type ChatNewResponse = {
   chatId: number
 }
 
+export type StreamEvent = {
+  chatId: number
+  chunk: TextStreamPart<ToolSet>
+}
+
 // Client-side API interface
 export interface AiApi {
   new: (data: CreateChatNewData) => Promise<ChatNewResponse>
+  onStream: (callback: (event: StreamEvent) => void) => () => void
 }

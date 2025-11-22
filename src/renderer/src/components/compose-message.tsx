@@ -1,29 +1,32 @@
 import { ArrowUpIcon } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCreateNewChat } from '@renderer/hooks/use-ai'
 import { ModelSelector } from './model-selector'
 import { Button } from './ui/button'
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from './ui/input-group'
 
-export function ComposeMessage() {
+interface ComposeMessageProps {
+  chatId?: number
+}
+
+export function ComposeMessage({ chatId }: ComposeMessageProps) {
   const [prompt, setPrompt] = useState('')
+  const navigate = useNavigate()
   const createNewChat = useCreateNewChat()
 
   const handleSend = async () => {
     if (!prompt.trim()) return
 
     createNewChat.mutate(
-      { prompt: prompt.trim() },
+      { prompt: prompt.trim(), chatId },
       {
         onSuccess: (result) => {
-          console.log('Chat created with ID:', result.chatId)
-          // Clear the input after successful send
           setPrompt('')
-          // TODO: Navigate to the chat or update UI as needed
+          if (!chatId) navigate(`/chat/${result.chatId}`)
         },
         onError: (error) => {
           console.error('Failed to create chat:', error)
-          // TODO: Show error notification to user
         }
       }
     )
