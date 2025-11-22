@@ -84,7 +84,7 @@ export function ComposeMessage({ chatId }: ComposeMessageProps) {
               variant={isStreaming ? 'secondary' : 'default'}
               className={
                 isStreaming
-                  ? 'text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px]'
+                  ? 'text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px] bg-f-600 hover:bg-f-500 text-white'
                   : 'text-xs aspect-square w-7 h-7 mr-[-4px] mb-[-4px] bg-[#c15f3c] hover:bg-[#d0704d] text-white'
               }
               disabled={isStreaming ? false : !prompt.trim() || createNewChat.isPending}

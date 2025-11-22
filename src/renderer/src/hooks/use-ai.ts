@@ -30,27 +30,15 @@ export function useAiStreaming(chatId?: number) {
 
     const unsubscribe = window.api.ai.onStream((event) => {
       if (!chatId || event.chatId === chatId) {
-        console.log(
-          '[useAiStreaming] Received event:',
-          event.chunk.type,
-          'for chatId:',
-          event.chatId,
-          'isAborted:',
-          isAbortedRef.current
-        )
-
         // Ignore all events if we've aborted
         if (isAbortedRef.current) {
-          console.log('[useAiStreaming] Ignoring event because stream was aborted')
           return
         }
 
         if (event.chunk.type === 'finish' || event.chunk.type === 'error') {
-          console.log('[useAiStreaming] Setting isStreaming to false')
           setIsStreaming(false)
           isAbortedRef.current = false // Reset for next stream
         } else if (event.chunk.type === 'text-delta') {
-          console.log('[useAiStreaming] Setting isStreaming to true')
           setIsStreaming(true)
         }
       }
@@ -59,11 +47,9 @@ export function useAiStreaming(chatId?: number) {
   }, [chatId])
 
   const abort = async () => {
-    console.log('[useAiStreaming] abort() called, setting isStreaming to false immediately')
     isAbortedRef.current = true
     setIsStreaming(false)
     await window.api.ai.abort()
-    console.log('[useAiStreaming] abort() completed')
   }
 
   return { isStreaming, abort }
