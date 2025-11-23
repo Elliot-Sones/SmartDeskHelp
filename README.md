@@ -1,6 +1,6 @@
 # Kel — The AI Agent that lives in your computer
 
-[![Watch the Demo](public/thumbnail.png)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Watch the Demo](public/thumbnail-with-yt.png)](https://www.youtube.com/watch?v=MteKGo_oHxo)
 
 > **Note**: This project was created for the Anthropic AI Hackathon in Toronto.
 
@@ -16,7 +16,7 @@ Kel is an AI agent desktop application that lives on your computer. Access it in
 - **Privacy-First**: Everything runs locally on your machine — your data never leaves your computer
 - **Multi-Model Support**: Powered by OpenRouter, giving you access to multiple AI models
 
-## Installation
+<!-- ## Installation
 
 ### Prerequisites
 
@@ -53,7 +53,7 @@ Currently, Kel supports:
 
 - **OpenRouter** (required) — Access to multiple AI models including Claude, GPT-4, and more
 
-_Note: Direct Anthropic API support is planned for future releases._
+_Note: Direct Anthropic API support is planned for future releases._ -->
 
 ## Development
 
