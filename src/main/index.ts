@@ -11,6 +11,7 @@ import {
   nativeImage
 } from 'electron'
 import { join } from 'path'
+import { homedir } from 'os'
 import icon from '../../resources/icon.png?asset'
 import { runMigrations, initializeSettings } from './db'
 import { registerAllApis } from './api'
@@ -215,6 +216,66 @@ app.whenReady().then(async () => {
 
   // Initialize settings with default values if needed
   await initializeSettings()
+
+  // Initialize semantic file system
+  const { embeddingService } = await import('./services/embedding')
+  const { indexerService } = await import('./services/indexer')
+  
+  try {
+    console.log('[Semantic] Initializing embedding service...')
+    await embeddingService.initialize()
+    
+    const desktopPath = join(homedir(), 'Desktop')
+    console.log(`[Semantic] Indexing from: ${desktopPath}`)
+    await indexerService.indexFromRoot(desktopPath)
+  } catch (error) {
+    console.error('[Semantic] Initialization failed:', error)
+  }
+
+  // Initialize knowledge system (system info, photos, personal memory)
+  try {
+    console.log('[Knowledge] Checking knowledge system...')
+    
+    const { knowledgeTreeService } = await import('./services/knowledge-tree')
+    const { systemScraperService } = await import('./services/system-scraper')
+    const { photoIndexerService } = await import('./services/photo-indexer')
+    const { personalMemoryService } = await import('./services/personal-memory')
+    
+    // Check if trees already have data
+    const computerStats = await knowledgeTreeService.getTreeStats('computer')
+    const photoStats = await knowledgeTreeService.getTreeStats('photos')
+    const personalStats = await knowledgeTreeService.getTreeStats('personal')
+    
+    // Index system info only if empty
+    if (computerStats.itemCount === 0) {
+      console.log('[Knowledge] Indexing system info...')
+      await systemScraperService.scrapeAndIndex()
+    } else {
+      console.log(`[Knowledge] System info already indexed (${computerStats.itemCount} facts)`)
+    }
+    
+    // Index photos only if empty (non-blocking)
+    if (photoStats.itemCount === 0) {
+      console.log('[Knowledge] Indexing photos...')
+      photoIndexerService.indexPhotos().catch((err) => {
+        console.log('[Knowledge] Photo indexing error (non-blocking):', err)
+      })
+    } else {
+      console.log(`[Knowledge] Photos already indexed (${photoStats.itemCount} photos)`)
+    }
+    
+    // Initialize personal memory only if empty
+    if (personalStats.itemCount === 0) {
+      console.log('[Knowledge] Initializing personal memory...')
+      await personalMemoryService.initialize()
+    } else {
+      console.log(`[Knowledge] Personal memory already exists (${personalStats.itemCount} facts)`)
+    }
+    
+    console.log('[Knowledge] Knowledge system ready!')
+  } catch (error) {
+    console.error('[Knowledge] Initialization failed:', error)
+  }
 
   // Register all IPC handlers
   registerAllApis()
