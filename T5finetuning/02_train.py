@@ -82,11 +82,12 @@ if torch.cuda.is_available():
 
 print(f"\n📥 Loading base model: {MODEL_ID}")
 
-from transformers import AutoProcessor, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-# Load the processor (tokenizer + image processor)
-# The processor handles converting text/images → tokens the model understands
-processor = AutoProcessor.from_pretrained(MODEL_ID)
+# Load the tokenizer (instead of processor, to avoid multimodal attribute error)
+# AutoProcessor fails on text-only Gemma 3 models due to missing image_token_id
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
+processor = None # Removed to prevent confusion, using tokenizer directly
 
 # Load the model
 # explicit device map handling for better compatibility (Mac/CPU/Vast)
@@ -103,7 +104,8 @@ else:
 model = AutoModelForSeq2SeqLM.from_pretrained(
     MODEL_ID,
     torch_dtype=torch_dtype,
-    device_map=device_map
+    device_map=device_map,
+    trust_remote_code=True
 )
 
 # If not using auto device map (e.g. Mac/CPU), move manually
@@ -211,7 +213,7 @@ def load_phase_data(phase_file: str) -> Dataset:
 
 def tokenize_function(examples):
     """Convert text examples to token IDs"""
-    model_inputs = processor(
+    model_inputs = tokenizer(
         text=examples["input"],
         truncation=True,
         max_length=MAX_INPUT_LENGTH,
@@ -219,7 +221,7 @@ def tokenize_function(examples):
         return_tensors=None
     )
     
-    labels = processor.tokenizer(
+    labels = tokenizer(
         text=examples["output"],
         truncation=True,
         max_length=MAX_OUTPUT_LENGTH,
@@ -228,7 +230,7 @@ def tokenize_function(examples):
     )
     
     model_inputs["labels"] = [
-        [(l if l != processor.tokenizer.pad_token_id else -100) for l in label]
+        [(l if l != tokenizer.pad_token_id else -100) for l in label]
         for label in labels["input_ids"]
     ]
     
@@ -256,9 +258,14 @@ for phase_name, phase_file, description in PHASES:
 # Data collator
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments, DataCollatorForSeq2Seq
 
+# Using standard DataCollatorWithPadding or manually handling padding because DataCollatorForSeq2Seq
+# tries to call model.prepare_decoder_input_ids_from_labels which is broken on t5gemma2
+from transformers import DataCollatorWithPadding
+
+# NOTE: Since we already pre-processed labels in tokenize_function, we just need padding.
 data_collator = DataCollatorForSeq2Seq(
-    tokenizer=processor.tokenizer,
-    model=model,
+    tokenizer=tokenizer,
+    model=None, # PASSING NONE prevents the collator from calling the broken model method!
     padding=True,
     label_pad_token_id=-100
 )
@@ -358,7 +365,7 @@ for phase_idx, (phase_name, phase_file, description) in enumerate(PHASES):
     # Save checkpoint after each phase
     checkpoint_path = f"{OUTPUT_DIR}/checkpoint_phase_{phase_idx + 1}"
     model.save_pretrained(checkpoint_path)
-    processor.save_pretrained(checkpoint_path)  # Required for resuming training
+    tokenizer.save_pretrained(checkpoint_path)  # Required for resuming training
     print(f"   💾 Checkpoint saved: {checkpoint_path}")
 
 # =============================================================================
@@ -370,7 +377,7 @@ print("💾 Saving final trained adapter...")
 print("=" * 60)
 
 model.save_pretrained(OUTPUT_DIR)
-processor.save_pretrained(OUTPUT_DIR)
+tokenizer.save_pretrained(OUTPUT_DIR)
 
 print(f"   Final adapter saved to: {OUTPUT_DIR}")
 

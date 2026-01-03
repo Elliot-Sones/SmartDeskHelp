@@ -89,9 +89,9 @@ try:
     print("   Attempting streaming download from HuggingFace...")
     squad_stream = load_dataset("squad_v2", split="train", streaming=True)
     
-    # Buffer examples
-    BUFFER_SIZE = 5000
-    print(f"   Buffering {BUFFER_SIZE:,} examples...")
+    # Buffer examples - increased to 200k to capture FULL dataset (~130k)
+    BUFFER_SIZE = 200000
+    print(f"   Buffering {BUFFER_SIZE:,} examples (Targeting FULL dataset)...")
     squad = []
     for i, ex in enumerate(tqdm(squad_stream, total=BUFFER_SIZE, desc="Downloading")):
         squad.append(ex)
@@ -102,11 +102,11 @@ except Exception as e:
     print(f"   ❌ HuggingFace Error: {e}")
     print("   🔄 Switching to manual download fallback...")
     squad = download_squad_manual()
-    # Limit to 5000 for quick local verify
-    if len(squad) > 5000:
-        import random
-        random.shuffle(squad)
-        squad = squad[:5000]
+    # No limit for manual download fallback either
+    # if len(squad) > 5000:
+    #     import random
+    #     random.shuffle(squad)
+    #     squad = squad[:5000]
 
 print(f"   Loaded {len(squad):,} examples")
 

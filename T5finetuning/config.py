@@ -73,7 +73,8 @@ LORA_TARGET_MODULES = [
 # How many training examples to use
 # More data = better generalization but longer training
 # 50K is a good balance for ~1.5hr training on A100
-NUM_TRAIN_EXAMPLES = 50000
+# 150K to cover the full SQuAD dataset (~130k)
+NUM_TRAIN_EXAMPLES = 150000
 
 # Ratio of "unanswerable" examples (model should say "Not found")
 # This teaches the model to refuse when answer isn't in context
@@ -133,7 +134,9 @@ USE_BF16 = True
 USE_FP16 = False  # Set to True only if GPU doesn't support BF16
 
 # How often to log training metrics
-LOGGING_STEPS = 50
+# How often to log training metrics
+# Set to 5 for very frequent updates (every few seconds)
+LOGGING_STEPS = 5
 
 # How often to save checkpoints
 SAVE_STEPS = 1000

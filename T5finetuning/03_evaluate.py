@@ -25,7 +25,7 @@ print("=" * 60)
 
 print("\n📥 Loading fine-tuned model...")
 
-from transformers import AutoProcessor, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
 
 # Check if adapter exists
@@ -39,7 +39,8 @@ if not adapter_path.exists():
 base_model = AutoModelForSeq2SeqLM.from_pretrained(
     MODEL_ID,
     torch_dtype=torch.float16,
-    device_map="auto"
+    device_map="auto",
+    trust_remote_code=True
 )
 
 # Load the fine-tuned LoRA adapter
@@ -47,8 +48,9 @@ base_model = AutoModelForSeq2SeqLM.from_pretrained(
 model = PeftModel.from_pretrained(base_model, OUTPUT_DIR)
 model.eval()  # Set to evaluation mode (disables dropout)
 
-# Load processor
-processor = AutoProcessor.from_pretrained(MODEL_ID)
+# Load tokenizer (instead of processor)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
+processor = None
 
 print("   ✓ Model loaded")
 
@@ -141,7 +143,7 @@ for i, test in enumerate(TEST_CASES):
     print(f"\n[Test {i+1}] {test['name']}")
     
     # Tokenize input
-    inputs = processor(
+    inputs = tokenizer(
         text=test["input"],
         return_tensors="pt",
         truncation=True,
@@ -162,7 +164,7 @@ for i, test in enumerate(TEST_CASES):
         )
     
     # Decode answer
-    answer = processor.tokenizer.decode(outputs[0], skip_special_tokens=True)
+    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
     
     # Check if answer is correct
     passed = False

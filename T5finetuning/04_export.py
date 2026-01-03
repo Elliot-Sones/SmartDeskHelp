@@ -42,14 +42,15 @@ print(f"   Output: {EXPORT_DIR}")
 
 print("\n📥 Loading trained model...")
 
-from transformers import AutoProcessor, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
 
 # Load base model
 base_model = AutoModelForSeq2SeqLM.from_pretrained(
     MODEL_ID,
     torch_dtype=torch.float16,
-    device_map="auto"
+    device_map="auto",
+    trust_remote_code=True
 )
 
 # Load adapter
@@ -59,7 +60,7 @@ if not adapter_path.exists():
     exit(1)
 
 model = PeftModel.from_pretrained(base_model, OUTPUT_DIR)
-processor = AutoProcessor.from_pretrained(MODEL_ID)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
 
 print("   ✓ Model loaded")
 
@@ -118,7 +119,7 @@ export_path.mkdir(parents=True, exist_ok=True)
 if MERGE_WEIGHTS:
     # Save the full merged model
     model.save_pretrained(EXPORT_DIR)
-    processor.save_pretrained(EXPORT_DIR)
+    tokenizer.save_pretrained(EXPORT_DIR)
     print(f"   Saved merged model to: {EXPORT_DIR}")
 else:
     # Copy just the adapter (much smaller)
@@ -126,7 +127,7 @@ else:
     if adapter_export.exists():
         shutil.rmtree(adapter_export)
     shutil.copytree(OUTPUT_DIR, adapter_export)
-    processor.save_pretrained(export_path)
+    tokenizer.save_pretrained(export_path)
     print(f"   Saved adapter to: {adapter_export}")
 
 # Report sizes
@@ -152,7 +153,7 @@ scp -r {EXPORT_DIR} youruser@yourmac:~/Projects/kel/python/
 Update `t5gemma_answer_server.py`:
 
 ```python
-from transformers import AutoProcessor, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from peft import PeftModel
 import torch
 
@@ -172,7 +173,7 @@ model = PeftModel.from_pretrained(model, ADAPTER_PATH)
 model.eval()
 
 # Load processor
-processor = AutoProcessor.from_pretrained(MODEL_ID)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
 ```
 
 ## Memory usage on 8GB Mac
