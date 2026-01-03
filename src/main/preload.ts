@@ -15,7 +15,8 @@ const chatApi: ChatApi = {
   create: (data) => ipcRenderer.invoke('chat:create', data),
   update: (id, data) => ipcRenderer.invoke('chat:update', id, data),
   delete: (id) => ipcRenderer.invoke('chat:delete', id),
-  get: (id) => ipcRenderer.invoke('chat:get', id)
+  get: (id) => ipcRenderer.invoke('chat:get', id),
+  closeSession: (id) => ipcRenderer.invoke('chat:closeSession', id)
 }
 
 const messageApi: MessageApi = {

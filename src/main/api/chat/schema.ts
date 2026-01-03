@@ -25,4 +25,5 @@ export interface ChatApi {
   update: (id: number, data: UpdateChatData) => Promise<Chat | null>
   delete: (id: number) => Promise<boolean>
   get: (id: number) => Promise<Chat | null>
+  closeSession: (id: number) => Promise<boolean>
 }

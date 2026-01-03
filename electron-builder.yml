@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: kel
+productName: minnie
 directories:
   buildResources: build
 files:
@@ -12,10 +12,12 @@ files:
 extraResources:
   - from: drizzle
     to: drizzle
+  - from: resources/models
+    to: resources/models
 asarUnpack:
   - resources/**
 win:
-  executableName: kel
+  executableName: minnie
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

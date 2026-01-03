@@ -1,14 +1,14 @@
 import { ipcMain } from 'electron'
 import { join } from 'path'
 import { homedir } from 'os'
-import { indexerService } from '../../services/indexer'
-import { routerService } from '../../services/router'
-import { openFile } from '../../services/file-actions'
-import { domainRouterService } from '../../services/domain-router'
-import { systemScraperService } from '../../services/system-scraper'
-import { photoIndexerService } from '../../services/photo-indexer'
-import { personalMemoryService } from '../../services/personal-memory'
-import { knowledgeTreeService } from '../../services/knowledge-tree'
+import { indexerService } from '../../services/indexing/file-indexer'
+import { fileSearchService } from '../../services/tools/helpers/file-search'
+import { openFile } from '../../services/tools/actions/file-opener'
+import { domainRouterService } from '../../services/tools/helpers/domain-router'
+import { systemScraperService } from '../../services/tools/helpers/system-info'
+import { photoIndexerService } from '../../services/tools/helpers/photo-metadata'
+import { personalMemoryService } from '../../services/tools/helpers/personal-memory'
+import { knowledgeStoreService } from '../../services/tools/helpers/knowledge-store'
 
 export function registerSemanticHandlers() {
   // Trigger manual reindex
@@ -20,7 +20,7 @@ export function registerSemanticHandlers() {
 
   // Search files semantically
   ipcMain.handle('semantic:search', async (_event, query: string) => {
-    return await routerService.findRelevantFiles(query)
+    return await fileSearchService.findRelevantFiles(query)
   })
 
   // Open a file
@@ -62,9 +62,9 @@ export function registerSemanticHandlers() {
   // Get knowledge tree stats for debugging
   ipcMain.handle('knowledge:stats', async () => {
     const [photos, computer, personal] = await Promise.all([
-      knowledgeTreeService.getTreeStats('photos'),
-      knowledgeTreeService.getTreeStats('computer'),
-      knowledgeTreeService.getTreeStats('personal')
+      knowledgeStoreService.getTreeStats('photos'),
+      knowledgeStoreService.getTreeStats('computer'),
+      knowledgeStoreService.getTreeStats('personal')
     ])
     return { photos, computer, personal }
   })

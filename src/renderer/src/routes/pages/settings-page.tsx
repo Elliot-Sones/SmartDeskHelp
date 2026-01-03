@@ -26,7 +26,7 @@ import { updateSettingsSchema } from '@shared/schemas'
 type SettingsForm = z.infer<typeof updateSettingsSchema>
 
 export function SettingsPage() {
-  useTitlebar({ title: 'Kel — Settings' })
+  useTitlebar({ title: 'Minnie — Settings' })
 
   const { settings, isLoading } = useSettings()
   const { mutate, saveStatus } = useAutoSaveSettings()
@@ -63,8 +63,8 @@ export function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="h-20 flex-grow">
-        <div className="px-6 py-4 flex items-center justify-center text-muted-foreground">
+      <div className="h-20 flex-grow glass-page">
+        <div className="px-6 py-4 flex items-center justify-center glass-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" />
         </div>
       </div>
@@ -72,7 +72,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className='flex-grow'>
+    <div className='flex-grow glass-page'>
       <div className="h-32"></div>
       <div className="px-4 py-4 space-y-6">
         <div className="flex items-center justify-between">
@@ -82,6 +82,7 @@ export function SettingsPage() {
             viewBox="0 0 24 24"
             width="48"
             height="48"
+            className="glass-icon"
           >
             {' '}
             <path
@@ -99,7 +100,7 @@ export function SettingsPage() {
               name="preferredName"
               render={({ field }) => (
                 <FormItem className="flex-grow">
-                  <FormLabel className="text-xs">Preferred Name</FormLabel>
+                  <FormLabel className="text-xs glass-text-muted">Preferred Name</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -121,7 +122,7 @@ export function SettingsPage() {
               name="apiKeyType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs">API Provider</FormLabel>
+                  <FormLabel className="text-xs glass-text-muted">API Provider</FormLabel>
                   <Select
                     value={field.value || ''}
                     onValueChange={(value) => {
@@ -150,7 +151,7 @@ export function SettingsPage() {
             name="apiKey"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">API Key</FormLabel>
+                <FormLabel className="text-xs glass-text-muted">API Key</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -177,11 +178,11 @@ function SaveIndicator({ status }: { status: 'idle' | 'saving' | 'saved' | 'erro
   if (status === 'idle') return null
 
   if (status === 'saved') {
-    return <div className="text-xs text-muted-foreground">Saved</div>
+    return <div className="text-xs glass-text-muted">Saved</div>
   }
 
   const config = {
-    saving: { icon: Loader2, text: 'Saving...', className: 'text-muted-foreground', animate: true },
+    saving: { icon: Loader2, text: 'Saving...', className: 'glass-text-muted', animate: true },
     error: {
       icon: AlertCircle,
       text: 'Error saving',

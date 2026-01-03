@@ -14,3 +14,9 @@ out
 
 # local
 local/
+
+# Bundled models (do not commit large binary files)
+# Bundled models (do not commit large binary files)
+resources/models/
+data.db
+python/__pycache__/

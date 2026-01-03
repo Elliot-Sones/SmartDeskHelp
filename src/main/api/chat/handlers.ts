@@ -48,4 +48,16 @@ export function registerChatHandlers() {
     const result = await db.select().from(chat).where(eq(chat.id, id))
     return result[0] || null
   })
+
+  // Cleanup ephemeral session context when user leaves a chat
+  ipcMain.handle('chat:closeSession', async (_event, id: number): Promise<boolean> => {
+    try {
+      const { sessionContextService } = await import('../../services/orchestration/session-context')
+      await sessionContextService.cleanup(id)
+      return true
+    } catch (error) {
+      console.error('[Chat] Session cleanup failed:', error)
+      return false
+    }
+  })
 }

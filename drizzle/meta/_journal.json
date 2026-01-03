@@ -15,6 +15,34 @@
       "when": 1765436685440,
       "tag": "0001_free_zarek",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1767071609702,
+      "tag": "0002_silent_preak",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1767071757133,
+      "tag": "0003_hesitant_steve_rogers",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1767071919714,
+      "tag": "0004_slippery_rocket_racer",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1767226803018,
+      "tag": "0005_stale_molecule_man",
+      "breakpoints": true
     }
   ]
 }

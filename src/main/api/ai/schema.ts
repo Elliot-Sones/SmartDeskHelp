@@ -3,7 +3,11 @@ import { z } from 'zod'
 
 export const SupportedModels = [
   'anthropic/claude-sonnet-4.5',
-  'anthropic/claude-haiku-4.5'
+  'anthropic/claude-haiku-4.5',
+  'ollama/phi3.5:latest',
+  'ollama/deepseek-r1:1.5b',
+  'ollama/gemma3:4b',  // Vision-capable local model
+  't5gemma/1b-1b'      // Encoder-decoder for efficient context→answer
 ] as const
 export type SupportedModel = (typeof SupportedModels)[number]
 

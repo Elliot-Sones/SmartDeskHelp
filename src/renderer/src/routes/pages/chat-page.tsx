@@ -7,18 +7,29 @@ import { useMessages } from '@renderer/hooks/use-message'
 import { useSettings } from '@renderer/hooks/use-settings'
 import { useTitlebar } from '@renderer/hooks/use-titlebar'
 import { BracesIcon, CopyIcon } from 'lucide-react'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { cn } from '../../lib/utils'
-import { Spinner } from '@renderer/components/ui/spinner'
 
 export function ChatPage() {
   const { id } = useParams<{ id: string }>()
-  const chat = useChat(Number(id))
-  const { data: messages } = useMessages(Number(id))
-  const { isStreaming } = useAiStreaming(Number(id))
+  const chatId = Number(id)
+  const chat = useChat(chatId)
+  const { data: messages } = useMessages(chatId)
+  const { isStreaming } = useAiStreaming(chatId)
   const { settings } = useSettings()
 
   useTitlebar({ title: chat.data?.title || 'New Chat' })
+
+  // Cleanup ephemeral session context when leaving the chat
+  useEffect(() => {
+    return () => {
+      // Fire and forget cleanup on unmount
+      window.api.chat.closeSession(chatId).catch(() => {
+        // Ignore errors - best effort cleanup
+      })
+    }
+  }, [chatId])
 
   const handleCopyMessage = async (content: string) => {
     try {
@@ -76,7 +87,7 @@ export function ChatPage() {
         )}
         <div className="my-8"></div>
       </div>
-      <ComposeMessage chatId={Number(id)} />
+      <ComposeMessage chatId={chatId} />
     </div>
   )
 }

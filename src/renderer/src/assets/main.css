@@ -161,3 +161,91 @@
   border-left: 1px solid #282726;
   height: 100vh;
 } */
+
+/* Glassmorphic UI Styles - matching popup aesthetic */
+.glass-page {
+  background: rgba(20, 20, 20, 0.95);
+  min-height: 100vh;
+}
+
+.glass-container {
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card {
+  background: rgba(40, 40, 40, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  transition: all 0.15s ease;
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  outline: none;
+}
+
+.glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.glass-text {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.glass-text-muted {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.glass-link {
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.15s ease;
+}
+
+.glass-link:hover {
+  color: white;
+}
+
+.glass-divider {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.glass-icon {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Glass button styles */
+.glass-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.glass-button-primary {
+  background: rgba(193, 95, 60, 0.9);
+  color: white;
+}
+
+.glass-button-primary:hover {
+  background: rgba(208, 112, 77, 0.95);
+}

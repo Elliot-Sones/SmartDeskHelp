@@ -4,10 +4,10 @@ import { RecentChats } from '@renderer/components/recent-chats'
 import { useTitlebar } from '@renderer/hooks/use-titlebar'
 
 export function HomePage() {
-  useTitlebar({ title: 'Kel' })
+  useTitlebar({ title: 'Minnie' })
 
   return (
-    <div className="flex flex-col h-[100vh]">
+    <div className="flex flex-col h-[100vh] glass-page">
       <div className="h-8"></div>
       <div className="px-4">
         <Greeting />
@@ -19,3 +19,4 @@ export function HomePage() {
     </div>
   )
 }
+

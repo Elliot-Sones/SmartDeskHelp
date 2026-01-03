@@ -24,6 +24,19 @@ export const knowledgeNodes = sqliteTable('knowledge_nodes', {
 })
 
 /**
+ * Knowledge metadata — tracks tree state for caching
+ * Used to skip rebuilding trees if data hasn't changed
+ */
+export const knowledgeMetadata = sqliteTable('knowledge_metadata', {
+  domain: text('domain').primaryKey(), // 'photos' | 'computer' | 'personal'
+  version: integer('version').notNull().default(1),
+  itemHash: text('item_hash'), // Hash of all item contents for change detection
+  lastBuilt: integer('last_built', { mode: 'timestamp' }),
+  nodeCount: integer('node_count'),
+  itemCount: integer('item_count')
+})
+
+/**
  * Knowledge items — leaf nodes containing actual content
  * Things like "User has 8GB RAM" or a photo description
  */

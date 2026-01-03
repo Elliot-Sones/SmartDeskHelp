@@ -1,0 +1,5 @@
+transformers
+torch
+# Accelerate is often required for device_map="auto" or specific device loading
+accelerate
+# If using Apple Silicon, you might need specific versions, but standard torch covers it

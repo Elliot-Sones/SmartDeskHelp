@@ -51,7 +51,7 @@ export function ComposeMessage({ chatId }: ComposeMessageProps) {
   return (
     <div>
       <InputGroup
-        className="group border-t border-x-0 min-h-48 border-b-0 rounded-none dark:bg-transparent has-[[data-slot=input-group-control]:focus-visible]:bg-input/15 
+        className="group border-t border-x-0 min-h-48 border-b-0 rounded-none glass-divider dark:bg-transparent has-[[data-slot=input-group-control]:focus-visible]:bg-input/15 
       has-[[data-slot=input-group-control]:focus-visible]:ring-0
       "
       >
@@ -62,6 +62,7 @@ export function ComposeMessage({ chatId }: ComposeMessageProps) {
           onKeyDown={handleKeyDown}
           rows={3}
           autoFocus
+          className="glass-text"
         />
         <InputGroupAddon align="block-end">
           <div className="flex items-center gap-2 w-full">
@@ -86,3 +87,4 @@ export function ComposeMessage({ chatId }: ComposeMessageProps) {
     </div>
   )
 }
+

@@ -20,8 +20,24 @@ export const semanticFiles = sqliteTable('semantic_files', {
   path: text('path').notNull().unique(),
   name: text('name').notNull(),
   embedding: blob('embedding'), // Filename/path embedding
-  contentSignature: text('content_signature'), // First ~500 chars of content
-  contentEmbedding: blob('content_embedding'), // Embedding of content
+  contentSignature: text('content_signature'), // First ~500 chars of content (kept for summary)
+  contentEmbedding: blob('content_embedding'), // Embedding of first chunk (for folder aggregation)
   extension: text('extension'),
-  indexedAt: integer('indexed_at', { mode: 'timestamp' })
+  indexedAt: integer('indexed_at', { mode: 'timestamp' }),
+  // Incremental indexing fields
+  contentHash: text('content_hash'), // Hash of file content for change detection
+  lastModified: integer('last_modified', { mode: 'timestamp' }), // File mtime for quick comparison
+  // Chunking metadata
+  chunkCount: integer('chunk_count').default(0) // Number of chunks for this file
+})
+
+// Document chunks for deep content search
+// Each file can have multiple chunks for searching within long documents
+export const semanticChunks = sqliteTable('semantic_chunks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  fileId: integer('file_id').notNull(), // References semanticFiles.id
+  chunkIndex: integer('chunk_index').notNull(), // 0, 1, 2, ... order in document
+  content: text('content').notNull(), // The actual chunk text (~512 chars)
+  embedding: blob('embedding').notNull(), // Embedding of this chunk
+  charOffset: integer('char_offset').notNull() // Starting character position in original doc
 })

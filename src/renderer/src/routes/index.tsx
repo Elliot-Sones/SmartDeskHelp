@@ -3,6 +3,7 @@ import { RootLayout } from './layouts/root-layout'
 import { HomePage } from './pages/home-page'
 import { SettingsPage } from './pages/settings-page'
 import { ChatPage } from './pages/chat-page'
+import { SearchPopup } from './pages/search-popup'
 
 export const router = createHashRouter([
   {
@@ -22,5 +23,10 @@ export const router = createHashRouter([
         element: <SettingsPage />
       }
     ]
+  },
+  {
+    // Search popup is a separate route without the root layout
+    path: '/search-popup',
+    element: <SearchPopup />
   }
 ])

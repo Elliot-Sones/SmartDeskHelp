@@ -1,5 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { ClaudeAIIcon } from './icons/claude'
+import { OllamaIcon } from './icons/ollama'
+import { GoogleIcon } from './icons/google'
 import { useSettings, useUpdateSettings } from '@renderer/hooks/use-settings'
 import { SupportedModels, type SupportedModel } from '@shared/schemas'
 
@@ -19,6 +21,26 @@ const modelOptions: ModelOption[] = [
     value: SupportedModels[1],
     label: 'Claude Haiku 4.5',
     icon: ClaudeAIIcon
+  },
+  {
+    value: SupportedModels[2],
+    label: 'Phi 3.5 (Local)',
+    icon: OllamaIcon
+  },
+  {
+    value: SupportedModels[3],
+    label: 'DeepSeek R1 (Local)',
+    icon: OllamaIcon
+  },
+  {
+    value: SupportedModels[4],
+    label: 'Gemma 3 4B (Local)',
+    icon: OllamaIcon
+  },
+  {
+    value: SupportedModels[5],
+    label: 'T5Gemma 1B (Local)',
+    icon: GoogleIcon
   }
 ]
 

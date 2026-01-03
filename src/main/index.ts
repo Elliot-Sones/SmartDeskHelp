@@ -18,9 +18,11 @@ import { registerAllApis } from './api'
 import { setMainWindow } from './api/ai/handlers'
 
 let mainWindow: BrowserWindow | null = null
+let searchPopup: BrowserWindow | null = null
 let tray: Tray | null = null
 let windowPosition: 'left' | 'right' = 'right' // Start on the right by default
 let isQuitting = false
+let isPopupVisible = false
 
 function createWindow(): void {
   // Get the primary display's work area
@@ -107,33 +109,6 @@ function createWindow(): void {
   }
 }
 
-function toggleWindow(): void {
-  if (!mainWindow) return
-
-  if (mainWindow.isVisible()) {
-    mainWindow.hide()
-    // On macOS, use app.hide() to properly restore focus to the previous application
-    if (process.platform === 'darwin') {
-      app.hide()
-    } else {
-      // On other platforms, blur the window to return focus to previous application
-      mainWindow.blur()
-    }
-  } else {
-    // Reposition window in case screen configuration changed
-    const primaryDisplay = screen.getPrimaryDisplay()
-    const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea
-    const [windowWidth] = mainWindow.getSize()
-
-    const x = windowPosition === 'right' ? displayX + screenWidth - windowWidth : displayX
-    const y = displayY // Use the display's y offset (accounts for menu bar)
-
-    mainWindow.setPosition(x, y)
-    mainWindow.show() // Show and take focus
-    mainWindow.focus() // Explicitly focus the window
-  }
-}
-
 function cycleWindowPosition(): void {
   if (!mainWindow) return
 
@@ -151,31 +126,153 @@ function cycleWindowPosition(): void {
   mainWindow.setPosition(x, y)
 }
 
+// Create the small search popup that appears from the menu bar
+function createSearchPopup(): void {
+  if (searchPopup) return
+
+  const popupWidth = 400
+  const popupHeight = 60
+
+  searchPopup = new BrowserWindow({
+    width: popupWidth,
+    height: popupHeight,
+    show: false,
+    frame: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    transparent: true,
+    vibrancy: 'popover',
+    visualEffectState: 'active',
+    roundedCorners: true,
+    hasShadow: true,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false
+    }
+  })
+
+  // Load the search popup route
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    searchPopup.loadURL(process.env['ELECTRON_RENDERER_URL'] + '#/search-popup')
+  } else {
+    searchPopup.loadFile(join(__dirname, '../renderer/index.html'), { hash: '/search-popup' })
+  }
+
+  // Hide on blur (click outside)
+  searchPopup.on('blur', () => {
+    hideSearchPopup()
+  })
+}
+
+function getPopupPosition(): { x: number; y: number } {
+  if (!tray) return { x: 0, y: 0 }
+  
+  const trayBounds = tray.getBounds()
+  const popupWidth = 400
+  
+  // Position centered below the tray icon
+  const x = Math.round(trayBounds.x + trayBounds.width / 2 - popupWidth / 2)
+  const y = trayBounds.y + trayBounds.height + 4 // 4px gap below tray
+  
+  return { x, y }
+}
+
+function toggleSearchPopup(): void {
+  if (!searchPopup) {
+    createSearchPopup()
+  }
+  
+  if (isPopupVisible) {
+    hideSearchPopup()
+  } else {
+    showSearchPopup()
+  }
+}
+
+function showSearchPopup(): void {
+  if (!searchPopup) return
+  
+  const { x, y } = getPopupPosition()
+  searchPopup.setPosition(x, y)
+  searchPopup.show()
+  searchPopup.focus()
+  isPopupVisible = true
+  
+  // Tell the renderer to focus the input
+  searchPopup.webContents.send('focus-search-input')
+}
+
+function hideSearchPopup(): void {
+  if (!searchPopup) return
+  searchPopup.hide()
+  isPopupVisible = false
+}
+
+function showFullWindow(query?: string): void {
+  hideSearchPopup()
+  
+  if (!mainWindow) return
+  
+  // Reposition window
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { x: displayX, y: displayY, width: screenWidth } = primaryDisplay.workArea
+  const [windowWidth] = mainWindow.getSize()
+
+  const x = windowPosition === 'right' ? displayX + screenWidth - windowWidth : displayX
+  const y = displayY
+
+  mainWindow.setPosition(x, y)
+  mainWindow.show()
+  mainWindow.focus()
+  
+  // If query provided, send it to the main window
+  if (query) {
+    mainWindow.webContents.send('submit-query-from-popup', query)
+  }
+}
+
 function createTray(): void {
   const iconPath = join(__dirname, '../../resources/dock-icon.png')
   const trayIcon = nativeImage.createFromPath(iconPath)
   const scaledIcon = trayIcon.resize({ width: 20, height: 20 })
 
   tray = new Tray(scaledIcon)
+  
+  // Click on tray icon shows the search popup
+  tray.on('click', () => {
+    toggleSearchPopup()
+  })
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Kel — ' + app.getVersion(),
+      label: 'Minnie — ' + app.getVersion(),
       enabled: false
     },
     {
       type: 'separator'
     },
     {
-      label: 'Talk to Kel',
-      accelerator: 'ctrl+k',
+      label: 'Quick Search',
+      accelerator: 'CmdOrCtrl+K',
       click: () => {
-        toggleWindow()
+        toggleSearchPopup()
+      }
+    },
+    {
+      label: 'Open Full View',
+      accelerator: 'CmdOrCtrl+Shift+K',
+      click: () => {
+        showFullWindow()
       }
     },
     {
       label: 'Cycle Window Position',
-      accelerator: 'ctrl+j',
+      accelerator: 'CmdOrCtrl+J',
       click: () => {
         cycleWindowPosition()
       }
@@ -185,8 +282,9 @@ function createTray(): void {
     },
     {
       label: 'Close Window',
-      accelerator: 'cmd+w',
+      accelerator: 'CmdOrCtrl+W',
       click: () => {
+        hideSearchPopup()
         if (mainWindow?.isVisible()) {
           mainWindow.hide()
           if (process.platform === 'darwin') {
@@ -197,7 +295,7 @@ function createTray(): void {
     },
     {
       label: 'Quit',
-      accelerator: 'cmd+q',
+      accelerator: 'CmdOrCtrl+Q',
       click: () => {
         app.quit()
       }
@@ -211,74 +309,86 @@ function createTray(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
-  // Run database migrations
+  // === CRITICAL PATH: DB + IPC handlers first (fast startup) ===
   await runMigrations()
-
-  // Initialize settings with default values if needed
   await initializeSettings()
-
-  // Initialize semantic file system
-  const { embeddingService } = await import('./services/embedding')
-  const { indexerService } = await import('./services/indexer')
-  
-  try {
-    console.log('[Semantic] Initializing embedding service...')
-    await embeddingService.initialize()
-    
-    const desktopPath = join(homedir(), 'Desktop')
-    console.log(`[Semantic] Indexing from: ${desktopPath}`)
-    await indexerService.indexFromRoot(desktopPath)
-  } catch (error) {
-    console.error('[Semantic] Initialization failed:', error)
-  }
-
-  // Initialize knowledge system (system info, photos, personal memory)
-  try {
-    console.log('[Knowledge] Checking knowledge system...')
-    
-    const { knowledgeTreeService } = await import('./services/knowledge-tree')
-    const { systemScraperService } = await import('./services/system-scraper')
-    const { photoIndexerService } = await import('./services/photo-indexer')
-    const { personalMemoryService } = await import('./services/personal-memory')
-    
-    // Check if trees already have data
-    const computerStats = await knowledgeTreeService.getTreeStats('computer')
-    const photoStats = await knowledgeTreeService.getTreeStats('photos')
-    const personalStats = await knowledgeTreeService.getTreeStats('personal')
-    
-    // Index system info only if empty
-    if (computerStats.itemCount === 0) {
-      console.log('[Knowledge] Indexing system info...')
-      await systemScraperService.scrapeAndIndex()
-    } else {
-      console.log(`[Knowledge] System info already indexed (${computerStats.itemCount} facts)`)
-    }
-    
-    // Index photos only if empty (non-blocking)
-    if (photoStats.itemCount === 0) {
-      console.log('[Knowledge] Indexing photos...')
-      photoIndexerService.indexPhotos().catch((err) => {
-        console.log('[Knowledge] Photo indexing error (non-blocking):', err)
-      })
-    } else {
-      console.log(`[Knowledge] Photos already indexed (${photoStats.itemCount} photos)`)
-    }
-    
-    // Initialize personal memory only if empty
-    if (personalStats.itemCount === 0) {
-      console.log('[Knowledge] Initializing personal memory...')
-      await personalMemoryService.initialize()
-    } else {
-      console.log(`[Knowledge] Personal memory already exists (${personalStats.itemCount} facts)`)
-    }
-    
-    console.log('[Knowledge] Knowledge system ready!')
-  } catch (error) {
-    console.error('[Knowledge] Initialization failed:', error)
-  }
-
-  // Register all IPC handlers
   registerAllApis()
+
+  // === DEFERRED: Non-blocking background initialization ===
+  // Use setImmediate to let the event loop handle UI creation first
+  setImmediate(async () => {
+    const startTime = Date.now()
+    console.log('[Startup] Beginning deferred initialization...')
+
+    try {
+      // 1. Cleanup stale session contexts (24h safety net)
+      const { sessionContextService } = await import('./services/orchestration/session-context')
+      await sessionContextService.cleanupStale()
+
+      // 2. File indexing (incremental, lazy-loads embedding model)
+      const { indexerService } = await import('./services/indexing/file-indexer')
+      const desktopPath = join(homedir(), 'Desktop')
+      console.log(`[Semantic] Indexing from: ${desktopPath}`)
+      await indexerService.indexFromRoot(desktopPath)
+
+      // 3. Knowledge system (parallel initialization)
+      console.log('[Knowledge] Checking knowledge system...')
+
+      const [knowledgeModule, systemModule, photoModule, memoryModule] = await Promise.all([
+        import('./services/tools/helpers/knowledge-store'),
+        import('./services/tools/helpers/system-info'),
+        import('./services/tools/helpers/photo-metadata'),
+        import('./services/tools/helpers/personal-memory')
+      ])
+
+      const { knowledgeStoreService } = knowledgeModule
+      const { systemScraperService } = systemModule
+      const { photoIndexerService } = photoModule
+      const { personalMemoryService } = memoryModule
+
+      // Check stats in parallel
+      const [computerStats, photoStats, personalStats] = await Promise.all([
+        knowledgeStoreService.getTreeStats('computer'),
+        knowledgeStoreService.getTreeStats('photos'),
+        knowledgeStoreService.getTreeStats('personal')
+      ])
+
+      // Index in parallel (only if needed)
+      const tasks: Promise<void>[] = []
+
+      if (computerStats.itemCount === 0) {
+        console.log('[Knowledge] Indexing system info...')
+        tasks.push(systemScraperService.scrapeAndIndex())
+      } else {
+        console.log(`[Knowledge] System info cached (${computerStats.itemCount} facts)`)
+      }
+
+      if (photoStats.itemCount === 0) {
+        console.log('[Knowledge] Indexing photos...')
+        tasks.push(
+          photoIndexerService.indexPhotos().catch((err) => {
+            console.log('[Knowledge] Photo indexing error (non-blocking):', err)
+          })
+        )
+      } else {
+        console.log(`[Knowledge] Photos cached (${photoStats.itemCount} photos)`)
+      }
+
+      if (personalStats.itemCount === 0) {
+        console.log('[Knowledge] Initializing personal memory...')
+        tasks.push(personalMemoryService.initialize())
+      } else {
+        console.log(`[Knowledge] Personal memory cached (${personalStats.itemCount} facts)`)
+      }
+
+      await Promise.all(tasks)
+
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+      console.log(`[Startup] Deferred initialization complete [${elapsed}s]`)
+    } catch (error) {
+      console.error('[Startup] Deferred initialization failed:', error)
+    }
+  })
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
@@ -290,8 +400,23 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
+  // IPC handlers for search popup
   ipcMain.on('ping', () => console.log('pong'))
+  
+  // Popup requests to expand to full window
+  ipcMain.on('popup:expand', () => {
+    showFullWindow()
+  })
+  
+  // Popup submits a query - expand and pass query to main window
+  ipcMain.on('popup:submit', (_event, query: string) => {
+    showFullWindow(query)
+  })
+  
+  // Popup requests to close
+  ipcMain.on('popup:close', () => {
+    hideSearchPopup()
+  })
 
   createWindow()
 
@@ -304,23 +429,35 @@ app.whenReady().then(async () => {
   if (process.platform === 'darwin') {
     createTray()
   }
+  
+  // Create search popup (hidden initially)
+  createSearchPopup()
 
-  // Register global shortcut Control+K (or Command+K on macOS)
-  const ret = globalShortcut.register('Control+K', () => {
-    toggleWindow()
+  // Register global shortcut Cmd/Ctrl+K for quick search popup
+  const ret = globalShortcut.register('CommandOrControl+K', () => {
+    toggleSearchPopup()
   })
 
   if (!ret) {
-    console.log('Global shortcut registration failed')
+    console.log('CommandOrControl+K shortcut registration failed')
+  }
+  
+  // Register Cmd/Ctrl+Shift+K for full window
+  const retFull = globalShortcut.register('CommandOrControl+Shift+K', () => {
+    showFullWindow()
+  })
+
+  if (!retFull) {
+    console.log('CommandOrControl+Shift+K shortcut registration failed')
   }
 
-  // Register global shortcut Control+L to cycle window position
-  const ret2 = globalShortcut.register('Control+J', () => {
+  // Register global shortcut Control+J to cycle window position
+  const ret2 = globalShortcut.register('CommandOrControl+J', () => {
     cycleWindowPosition()
   })
 
   if (!ret2) {
-    console.log('Control+L shortcut registration failed')
+    console.log('CommandOrControl+J shortcut registration failed')
   }
 
   app.on('activate', function () {

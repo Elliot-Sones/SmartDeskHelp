@@ -9,11 +9,11 @@ export function RecentChats() {
   const { chats, isLoading } = useChats()
 
   if (isLoading) {
-    return <div className="p-4 text-f-500">Loading chats...</div>
+    return <div className="p-4 glass-text-muted">Loading chats...</div>
   }
 
   if (!chats || chats.length === 0) {
-    return <div className="p-4 text-f-500 text-xs">No chats yet...</div>
+    return <div className="p-4 glass-text-muted text-xs">No chats yet...</div>
   }
 
   // Only show the most recent 10 chats
@@ -25,13 +25,14 @@ export function RecentChats() {
         <Link
           to={`/chat/${chat.id}`}
           key={chat.id}
-          className="py-1.5 text-f-300 hover:text-foreground flex items-center justify-between gap-4"
+          className="py-1.5 glass-link flex items-center justify-between gap-4 hover:text-white"
           tabIndex={-1}
         >
           <div className="whitespace-nowrap truncate flex-1">{chat.title || 'Untitled Chat'}</div>
-          <div className="text-f-700 text-[10px] shrink-0">{dayjs(chat.updatedAt).fromNow()}</div>
+          <div className="glass-text-muted text-[10px] shrink-0">{dayjs(chat.updatedAt).fromNow()}</div>
         </Link>
       ))}
     </div>
   )
 }
+
