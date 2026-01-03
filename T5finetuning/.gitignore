@@ -1,0 +1,6 @@
+output/
+wandb/
+__pycache__/
+*.pyc
+.DS_Store
+# We KEEP the data files since they are small enough (~7MB total) and verified

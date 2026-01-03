@@ -1,0 +1,15 @@
+# Core ML libraries
+torch>=2.0.0
+transformers>=4.40.0
+datasets>=2.18.0
+accelerate>=0.27.0
+peft>=0.10.0          # For LoRA
+bitsandbytes>=0.43.0  # For 8-bit quantization
+
+# Training utilities
+wandb>=0.16.0         # Experiment tracking
+tqdm>=4.66.0          # Progress bars
+evaluate>=0.4.0       # Metrics
+
+# Image processing (for multimodal)
+Pillow>=10.0.0
