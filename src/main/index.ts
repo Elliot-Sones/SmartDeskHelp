@@ -11,7 +11,6 @@ import {
   nativeImage
 } from 'electron'
 import { join } from 'path'
-import { homedir } from 'os'
 import icon from '../../resources/icon.png?asset'
 import { runMigrations, initializeSettings } from './db'
 import { registerAllApis } from './api'
@@ -314,79 +313,51 @@ app.whenReady().then(async () => {
   await initializeSettings()
   registerAllApis()
 
-  // === DEFERRED: Non-blocking background initialization ===
-  // Use setImmediate to let the event loop handle UI creation first
+  // === BACKGROUND SERVICES ===
   setImmediate(async () => {
-    const startTime = Date.now()
-    console.log('[Startup] Beginning deferred initialization...')
+    const { spawn } = await import('child_process')
+    const { join } = await import('path')
+    
+    const functionGemmaScript = join(__dirname, '../../python/function_gemma_server.py')
+    const indexerScript = join(__dirname, '../../python/leann_indexer.py')
 
+    // 1. Start FunctionGemma Server (Routing)
+    console.log(`[Startup] Starting FunctionGemma: python3 ${functionGemmaScript}`)
+    const functionServer = spawn('python3', [functionGemmaScript], { stdio: 'inherit' })
+    functionServer.on('error', (e) => console.error('[Startup] FunctionGemma failed:', e))
+
+    // 2. T5Gemma Server - DISABLED (using Claude instead until fine-tuning complete)
+    
+    // Ensure servers are killed when app quits
+    app.on('before-quit', () => {
+      functionServer.kill()
+    })
+
+    // 3. Check & Run Indexer if needed (now with memory-safe batching)
+    console.log('[Startup] Checking LEANN index status...')
     try {
-      // 1. Cleanup stale session contexts (24h safety net)
-      const { sessionContextService } = await import('./services/orchestration/session-context')
-      await sessionContextService.cleanupStale()
-
-      // 2. File indexing (incremental, lazy-loads embedding model)
-      const { indexerService } = await import('./services/indexing/file-indexer')
-      const desktopPath = join(homedir(), 'Desktop')
-      console.log(`[Semantic] Indexing from: ${desktopPath}`)
-      await indexerService.indexFromRoot(desktopPath)
-
-      // 3. Knowledge system (parallel initialization)
-      console.log('[Knowledge] Checking knowledge system...')
-
-      const [knowledgeModule, systemModule, photoModule, memoryModule] = await Promise.all([
-        import('./services/tools/helpers/knowledge-store'),
-        import('./services/tools/helpers/system-info'),
-        import('./services/tools/helpers/photo-metadata'),
-        import('./services/tools/helpers/personal-memory')
-      ])
-
-      const { knowledgeStoreService } = knowledgeModule
-      const { systemScraperService } = systemModule
-      const { photoIndexerService } = photoModule
-      const { personalMemoryService } = memoryModule
-
-      // Check stats in parallel
-      const [computerStats, photoStats, personalStats] = await Promise.all([
-        knowledgeStoreService.getTreeStats('computer'),
-        knowledgeStoreService.getTreeStats('photos'),
-        knowledgeStoreService.getTreeStats('personal')
-      ])
-
-      // Index in parallel (only if needed)
-      const tasks: Promise<void>[] = []
-
-      if (computerStats.itemCount === 0) {
-        console.log('[Knowledge] Indexing system info...')
-        tasks.push(systemScraperService.scrapeAndIndex())
-      } else {
-        console.log(`[Knowledge] System info cached (${computerStats.itemCount} facts)`)
+      const { leannClient } = await import('./services/leann')
+      
+      let status: { indexed: boolean; path: string | null } = { indexed: false, path: null }
+      try {
+         // Give server 2s to warmup
+         await new Promise(r => setTimeout(r, 2000))
+         status = await leannClient.getIndexStatus()
+      } catch (e) {
+         console.log('[Startup] Could not contact server for index status, assuming new.')
       }
 
-      if (photoStats.itemCount === 0) {
-        console.log('[Knowledge] Indexing photos...')
-        tasks.push(
-          photoIndexerService.indexPhotos().catch((err) => {
-            console.log('[Knowledge] Photo indexing error (non-blocking):', err)
-          })
-        )
+      if (status.indexed) {
+        console.log(`[Startup] LEANN index ready at: ${status?.path}`)
       } else {
-        console.log(`[Knowledge] Photos cached (${photoStats.itemCount} photos)`)
+        console.log('[Startup] LEANN index not found. STARTING INDEXER...')
+        console.log(`[Startup] Spawning indexer: python3 ${indexerScript}`)
+        
+        const indexer = spawn('python3', [indexerScript, '--verbose'], { stdio: 'inherit' })
+        indexer.on('close', (code) => console.log(`[Startup] Indexer finished with code ${code}`))
       }
-
-      if (personalStats.itemCount === 0) {
-        console.log('[Knowledge] Initializing personal memory...')
-        tasks.push(personalMemoryService.initialize())
-      } else {
-        console.log(`[Knowledge] Personal memory cached (${personalStats.itemCount} facts)`)
-      }
-
-      await Promise.all(tasks)
-
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
-      console.log(`[Startup] Deferred initialization complete [${elapsed}s]`)
     } catch (error) {
-      console.error('[Startup] Deferred initialization failed:', error)
+      console.error('[Startup] Initialization check failed:', error)
     }
   })
 

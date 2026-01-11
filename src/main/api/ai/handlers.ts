@@ -193,24 +193,10 @@ async function processAiStream(chatId: number) {
   // Get the last user message for intelligent routing
   const lastUserMessage = messages[messages.length - 1]?.content || ''
 
-  // Add query topic to session context (ephemeral, deleted when chat closes)
-  let sessionContextStr = ''
-  try {
-    const { sessionContextService } = await import('../../services/orchestration/session-context')
+  // Session context is now handled by LEANN if needed in the future
+  const sessionContextStr = ''
 
-    // Add this query's topic to session context
-    await sessionContextService.addContext(chatId, lastUserMessage)
-
-    // Get relevant past topics for context injection
-    const relevantTopics = await sessionContextService.getRelevantContext(chatId, lastUserMessage)
-    if (relevantTopics.length > 0) {
-      sessionContextStr = `\n\nRecent conversation topics: ${relevantTopics.join(', ')}`
-    }
-  } catch (error) {
-    console.log('[AI] Session context error (non-blocking):', error)
-  }
-
-  // Use Gemma Router for intelligent tool selection and context gathering
+  // Use Tool Router for intelligent tool selection and context gathering via LEANN
   let toolContext = ''
 
   try {
@@ -335,18 +321,11 @@ If the user mentioned personal facts, remember them with <memory>fact</memory> t
       }
     }
 
-    // Extract and store memories from the response
+    // Extract memories from response (for future LEANN integration)
     const memories = extractMemoriesFromResponse(fullResponse)
     if (memories.length > 0) {
       console.log(`[AI] Extracted ${memories.length} memories:`, memories)
-      try {
-        const { personalMemoryService } = await import('../../services/tools/helpers/personal-memory')
-        for (const memory of memories) {
-          await personalMemoryService.learn(memory, 'inferred')
-        }
-      } catch (memoryError) {
-        console.log('[AI] Could not store memories:', memoryError)
-      }
+      // TODO: Add learning endpoint to Python LEANN server
     }
 
     // Remove memory tags from the response before saving

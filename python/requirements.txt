@@ -1,5 +1,10 @@
-transformers
+transformers<4.46
+
 torch
-# Accelerate is often required for device_map="auto" or specific device loading
 accelerate
-# If using Apple Silicon, you might need specific versions, but standard torch covers it
+sentence-transformers
+watchdog
+aiofiles
+pydantic
+numpy
+

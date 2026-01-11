@@ -89,8 +89,10 @@ NEGATIVE_EXAMPLE_RATIO = 0.10
 MAX_INPUT_LENGTH = 1024
 
 # Maximum output length (answer)
-# Answers should be concise - 128 tokens is plenty
-MAX_OUTPUT_LENGTH = 128
+# For extractive: 128 tokens is plenty
+# For conversational: Need 256 tokens for 1-2 sentence responses
+# Increase this if training conversational data
+MAX_OUTPUT_LENGTH = 256  # Increased for conversational answers
 
 # =============================================================================
 # TRAINING CONFIGURATION
@@ -101,15 +103,14 @@ MAX_OUTPUT_LENGTH = 128
 NUM_EPOCHS = 3
 
 # How many examples to process at once (per GPU)
-# A100 80GB MAXIMIZED SETTINGS:
-# Batch 64 is safe with LoRA + Gradient Checkpointing
-# Batch 128 is RISKY (might OOM crash)
-BATCH_SIZE = 64
+# RTX 4090 (24GB) SETTINGS:
+# Physical Batch: 32 (Fits in 24GB VRAM)
+BATCH_SIZE = 32
 
 # Process this many batches before updating weights
-# Effective batch size = BATCH_SIZE × GRADIENT_ACCUMULATION
-# 64 × 2 = 128 effective batch size (Excellent stability)
-GRADIENT_ACCUMULATION_STEPS = 2
+# Effective batch size = 32 * 8 = 256
+# We effectively SIMULATE the A100's large batch while using cheap RAM
+GRADIENT_ACCUMULATION_STEPS = 8
 
 # Learning rate: How big of a step to take during optimization
 # 5e-4 is typical for LoRA fine-tuning (higher than full fine-tuning)

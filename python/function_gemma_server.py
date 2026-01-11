@@ -841,6 +841,146 @@ class RequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self.send_json({"error": str(e)}, 500)
         
+        elif self.path == "/system_info":
+            # Real-time system information endpoint
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode() if content_length > 0 else "{}"
+                data = json.loads(body) if body else {}
+                
+                # Get requested sections (default: all)
+                sections = data.get("sections", ["all"])
+                if isinstance(sections, str):
+                    sections = [sections]
+                
+                # Import and call system_info module
+                from system_info import get_system_info, format_system_info_for_llm
+                
+                info = get_system_info(sections)
+                formatted = format_system_info_for_llm(info)
+                
+                self.send_json({
+                    "success": True,
+                    "data": info,
+                    "formatted": formatted,
+                })
+                
+            except json.JSONDecodeError:
+                self.send_json({"error": "Invalid JSON"}, 400)
+            except ImportError as e:
+                logger.error(f"system_info module not found: {e}")
+                self.send_json({
+                    "error": "System info module not available. Run: pip install psutil",
+                    "success": False,
+                }, 500)
+            except Exception as e:
+                logger.error(f"System info error: {e}")
+                self.send_json({"error": str(e), "success": False}, 500)
+        
+        elif self.path == "/search_photos":
+            # Hybrid photo search: keyword first, embedding fallback
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode() if content_length > 0 else "{}"
+                data = json.loads(body) if body else {}
+                
+                query = data.get("query", "")
+                keywords = data.get("keywords", [])
+                limit = data.get("limit", 10)
+                
+                # If no keywords provided, extract from query
+                if not keywords and query:
+                    # Basic keyword extraction (Function Gemma should do this ideally)
+                    keywords = [w.strip() for w in query.lower().split() 
+                               if len(w.strip()) > 2 and w.strip() not in 
+                               {"the", "and", "for", "with", "from", "photo", "picture", "image", "find", "show", "open"}]
+                
+                logger.info(f"Photo search: keywords={keywords}, limit={limit}")
+                
+                # Import photos scanner
+                from indexing.photos_scanner import get_photos_scanner
+                
+                scanner = get_photos_scanner()
+                
+                if not scanner.is_available():
+                    self.send_json({
+                        "success": False,
+                        "error": "Apple Photos not available. Install osxphotos: pip install osxphotos",
+                        "results": [],
+                    })
+                    return
+                
+                # FAST PATH: Keyword search
+                results = scanner.search_by_keywords(keywords, limit=limit)
+                
+                if len(results) >= 3:
+                    # Found enough results with keywords
+                    self.send_json({
+                        "success": True,
+                        "method": "keyword",
+                        "results": [r.to_dict() for r in results],
+                        "count": len(results),
+                    })
+                    return
+                
+                # SLOW PATH: Embedding fallback (if keyword search found < 3 results)
+                if len(results) < 3 and query:
+                    logger.info("Keyword search found few results, trying embedding fallback...")
+                    
+                    try:
+                        from leann_search import search as leann_search
+                        
+                        embedding_results = leann_search(
+                            query=query,
+                            intent="find",
+                            source="photos",
+                            top_k=limit
+                        )
+                        
+                        # Merge results (keyword results first, then embedding)
+                        seen_paths = {r.file_path for r in results}
+                        for er in embedding_results.get("results", []):
+                            if er.get("file_path") not in seen_paths and len(results) < limit:
+                                # Convert LEANN result to PhotoEntry-like dict
+                                results.append(type('PhotoEntry', (), {
+                                    'to_dict': lambda: er,
+                                    'file_path': er.get('file_path'),
+                                })())
+                        
+                        self.send_json({
+                            "success": True,
+                            "method": "hybrid",
+                            "results": [r.to_dict() for r in results],
+                            "count": len(results),
+                        })
+                        return
+                        
+                    except Exception as e:
+                        logger.debug(f"Embedding fallback failed: {e}")
+                
+                # Return whatever we found
+                self.send_json({
+                    "success": True,
+                    "method": "keyword",
+                    "results": [r.to_dict() for r in results],
+                    "count": len(results),
+                })
+                
+            except json.JSONDecodeError:
+                self.send_json({"error": "Invalid JSON"}, 400)
+            except ImportError as e:
+                logger.error(f"Photos scanner not available: {e}")
+                self.send_json({
+                    "error": "Photos scanner not available. Run: pip install osxphotos",
+                    "success": False,
+                    "results": [],
+                }, 500)
+            except Exception as e:
+                logger.error(f"Photo search error: {e}")
+                import traceback
+                traceback.print_exc()
+                self.send_json({"error": str(e), "success": False, "results": []}, 500)
+        
         else:
             self.send_json({"error": "Not found"}, 404)
 
@@ -852,10 +992,12 @@ def main():
     
     logger.info(f"Starting Function-Gemma server on http://localhost:{port}")
     logger.info("Endpoints:")
-    logger.info("  POST /route        - Route a query to the best tool")
-    logger.info("  POST /search       - Search LEANN index")
-    logger.info("  POST /index_status - Check LEANN index status")
-    logger.info("  GET  /health       - Health check")
+    logger.info("  POST /route         - Route a query to the best tool")
+    logger.info("  POST /search        - Search LEANN index")
+    logger.info("  POST /search_photos - Search Apple Photos (hybrid: keyword + embedding)")
+    logger.info("  POST /system_info   - Get real-time system info (CPU, RAM, Disk, etc.)")
+    logger.info("  POST /index_status  - Check LEANN index status")
+    logger.info("  GET  /health        - Health check")
     logger.info("")
     logger.info("Model will be loaded on first request...")
     logger.info("Press Ctrl+C to stop")

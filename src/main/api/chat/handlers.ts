@@ -50,14 +50,10 @@ export function registerChatHandlers() {
   })
 
   // Cleanup ephemeral session context when user leaves a chat
-  ipcMain.handle('chat:closeSession', async (_event, id: number): Promise<boolean> => {
-    try {
-      const { sessionContextService } = await import('../../services/orchestration/session-context')
-      await sessionContextService.cleanup(id)
-      return true
-    } catch (error) {
-      console.error('[Chat] Session cleanup failed:', error)
-      return false
-    }
+  // Note: Session context is now handled by LEANN if needed in the future
+  ipcMain.handle('chat:closeSession', async (_event, _id: number): Promise<boolean> => {
+    // No-op for backwards compatibility
+    // Session context cleanup will be added when LEANN supports it
+    return true
   })
 }

@@ -159,9 +159,9 @@ lora_config = LoraConfig(
     lora_dropout=LORA_DROPOUT,
     
     # Which model layers to add LoRA to
-    # We target attention layers (q, k, v, o projections)
-    # This includes BOTH self-attention AND cross-attention
-    target_modules=LORA_TARGET_MODULES,
+    # We target attention layers (q, k, v, o) AND MLP layers (gate, up, down)
+    # This includes BOTH self-attention AND cross-attention in the decoder
+    target_modules=["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
     
     # Don't merge LoRA weights during training
     # We need them separate so we can save just the adapter
@@ -241,10 +241,31 @@ def tokenize_function(examples):
 # Step 6: Define phased training
 # =============================================================================
 
+# =============================================================================
+# PHASE CONFIGURATION
+# =============================================================================
+#
+# The order matters! Curriculum learning principle:
+#   1. First teach WHAT to find (extraction)
+#   2. Then teach HOW to format (chunks)
+#   3. Then teach HOW to say it (conversational)
+#   4. Finally teach WHEN to refuse (negatives)
+#
+# If you skip conversational phase, outputs will be terse extractions.
+# If you only use conversational, model may hallucinate (no extraction foundation).
+
 PHASES = [
-    ("🟢 PHASE 1: EASY", "train_easy.jsonl", "Basic Q&A format"),
-    ("🟡 PHASE 2: MEDIUM", "train_medium.jsonl", "Chunk formatting"),
-    ("🔴 PHASE 3: HARD", "train_hard.jsonl", "Multi-chunk + negatives"),
+    # Phase 1: Learn to extract answers (foundation)
+    ("🟢 PHASE 1: EXTRACTION", "generated/layer1_squad.jsonl", "Basic Extraction"),
+
+    # Phase 2: Learn chunk format and reasoning
+    ("🟡 PHASE 2: REASONING & FORMAT", "generated/layer2_reasoning.jsonl", "Logic + complex formats"),
+
+    # Phase 3: Learn conversational style (NEW - comment out to skip)
+    ("🔵 PHASE 3: CONVERSATIONAL", "generated/train_conversational.jsonl", "Natural responses"),
+
+    # Phase 4: Learn polite refusals
+    ("🟠 PHASE 4: REFUSALS", "generated/layer5_negatives.jsonl", "Polite refusals"),
 ]
 
 print("\n📋 Training Plan:")
